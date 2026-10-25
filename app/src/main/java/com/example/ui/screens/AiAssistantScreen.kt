@@ -3,6 +3,7 @@ package com.example.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Warning
@@ -51,7 +53,9 @@ import androidx.compose.ui.unit.sp
 import com.example.ui.ChatMessage
 import com.example.ui.MainViewModel
 import com.example.ui.theme.BorderSubtle
+import com.example.ui.theme.ChampagneGold
 import com.example.ui.theme.DarkNightBlue
+import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.MedicalCyan
 import com.example.ui.theme.MedicalNavy
 import com.example.ui.theme.MedicalNavyElevated
@@ -69,9 +73,9 @@ fun AiAssistantScreen(viewModel: MainViewModel) {
     val listState = rememberLazyListState()
 
     val quickPrompts = listOf(
+        "Parler à abdellahTron : Calcul dose Propofol",
         "🚨 Protocole Anaphylaxie Grade III",
         "Algorithme CICO (Intubation impossible)",
-        "Doses d'induction Propofol pour 75kg",
         "Critères de sortie de SSPI (Aldrete)",
         "Contre-indications Célocurine",
         "Doses Sugammadex après ISR"
@@ -89,22 +93,85 @@ fun AiAssistantScreen(viewModel: MainViewModel) {
             .background(DarkNightBlue)
             .testTag("ai_assistant_screen")
     ) {
-        // Disclaimer Top Bar
+        // abdellahTron Visual Identity Header
         Surface(
             color = MedicalNavy,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            border = BorderStroke(1.dp, BorderSubtle)
         ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.Warning, null, tint = WarningOrange, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "Aide à la décision clinique. Ne remplace pas le jugement du médecin anesthésiste.",
-                    color = SecondaryGrey,
-                    fontSize = 10.sp
-                )
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(ElectricCyan.copy(alpha = 0.15f))
+                                .border(BorderStroke(1.dp, ElectricCyan.copy(alpha = 0.5f)), RoundedCornerShape(10.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = "abdellahTron",
+                                tint = ElectricCyan,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    "abdellahTron",
+                                    color = ElectricCyan,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 16.sp,
+                                    letterSpacing = 0.5.sp
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Surface(
+                                    shape = RoundedCornerShape(4.dp),
+                                    color = ChampagneGold.copy(alpha = 0.18f),
+                                    border = BorderStroke(0.5.dp, ChampagneGold.copy(alpha = 0.6f))
+                                ) {
+                                    Text(
+                                        "INTELLIGENCE CLINIQUE",
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
+                                        color = ChampagneGold,
+                                        fontSize = 8.5.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            Text(
+                                "Assistant IA médical intégré à Anestheia Trone",
+                                color = SecondaryGrey,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(ElectricCyan)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Warning, null, tint = WarningOrange, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Aide à la décision clinique. Ne remplace pas le jugement du médecin anesthésiste.",
+                        color = SecondaryGrey,
+                        fontSize = 10.sp
+                    )
+                }
             }
         }
 
@@ -119,7 +186,8 @@ fun AiAssistantScreen(viewModel: MainViewModel) {
                 FilterChip(
                     selected = false,
                     onClick = {
-                        viewModel.sendAiPrompt(prompt)
+                        val cleanPrompt = prompt.removePrefix("Parler à abdellahTron : ")
+                        viewModel.sendAiPrompt(cleanPrompt)
                     },
                     label = { Text(prompt, fontSize = 11.sp) },
                     colors = FilterChipDefaults.filterChipColors(
@@ -152,14 +220,15 @@ fun AiAssistantScreen(viewModel: MainViewModel) {
                     ) {
                         CircularProgressIndicator(
                             color = MedicalCyan,
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(18.dp),
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            "ANESTHESIA AI consulte la base médicale...",
+                            "abdellahTron consulte la base médicale...",
                             color = MedicalCyan,
-                            fontSize = 12.sp
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -183,7 +252,7 @@ fun AiAssistantScreen(viewModel: MainViewModel) {
                     value = inputText,
                     onValueChange = { inputText = it },
                     placeholder = {
-                        Text("Posez une question clinique ou posologique...", color = SecondaryGrey, fontSize = 12.sp)
+                        Text("Parler à abdellahTron (posologie, protocole, cas)...", color = SecondaryGrey, fontSize = 12.sp)
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -210,7 +279,7 @@ fun AiAssistantScreen(viewModel: MainViewModel) {
                 ) {
                     Icon(
                         imageVector = Icons.Default.Send,
-                        contentDescription = "Envoyer",
+                        contentDescription = "Envoyer à abdellahTron",
                         tint = if (inputText.isNotBlank() && !isGenerating) DarkNightBlue else SecondaryGrey,
                         modifier = Modifier.size(20.dp)
                     )
@@ -224,21 +293,32 @@ fun AiAssistantScreen(viewModel: MainViewModel) {
 fun ChatBubble(message: ChatMessage) {
     val isUser = message.isUser
 
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
+        horizontalAlignment = if (isUser) Alignment.End else Alignment.Start
     ) {
         if (!isUser) {
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(MedicalCyan.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 4.dp)
             ) {
-                Icon(Icons.Default.Psychology, null, tint = MedicalCyan, modifier = Modifier.size(16.dp))
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .clip(CircleShape)
+                        .background(ElectricCyan.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.AutoAwesome, null, tint = ElectricCyan, modifier = Modifier.size(13.dp))
+                }
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    "Réponse de abdellahTron",
+                    color = ElectricCyan,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp
+                )
             }
-            Spacer(modifier = Modifier.width(8.dp))
         }
 
         Surface(
@@ -249,8 +329,8 @@ fun ChatBubble(message: ChatMessage) {
                 bottomEnd = if (isUser) 2.dp else 14.dp
             ),
             color = if (isUser) MedicalCyan else MedicalNavyElevated,
-            border = BorderStroke(1.dp, if (isUser) MedicalCyan else BorderSubtle),
-            modifier = Modifier.widthIn(max = 300.dp)
+            border = BorderStroke(1.dp, if (isUser) MedicalCyan else ElectricCyan.copy(alpha = 0.25f)),
+            modifier = Modifier.widthIn(max = 310.dp)
         ) {
             Text(
                 text = message.text,

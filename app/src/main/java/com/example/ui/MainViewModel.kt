@@ -131,7 +131,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         listOf(
             ChatMessage(
                 isUser = false,
-                text = "Bonjour 👋 Je suis ANESTHESIA AI, votre assistant intelligent en anesthésie-réanimation. Posez-moi une question clinique, demandez un protocole d'urgence, une posologie ou une explication biologique."
+                text = "Bonjour 👋 Je suis abdellahTron, votre assistant médical en anesthésie-réanimation au sein d'Anestheia Trone. Posez-moi une question clinique, demandez un protocole d'urgence, une posologie pondérale ou une interprétation biologique."
             )
         )
     )
@@ -241,27 +241,45 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleEquipmentItem(id: String) {
         _equipmentChecklist.value = _equipmentChecklist.value.map { item ->
             if (item.id == id) {
-                val nextStatus = when (item.status) {
-                    "PENDING" -> "VERIFIED"
-                    "VERIFIED" -> "ACTION_REQUIRED"
-                    else -> "PENDING"
-                }
+                val nextStatus = if (item.status == "VERIFIED") "PENDING" else "VERIFIED"
                 item.copy(status = nextStatus)
             } else item
         }
     }
 
-    fun toggleWhoItem(id: String) {
-        _whoChecklist.value = _whoChecklist.value.map { item ->
+    fun setEquipmentActionRequired(id: String) {
+        _equipmentChecklist.value = _equipmentChecklist.value.map { item ->
             if (item.id == id) {
-                val nextStatus = when (item.status) {
-                    "PENDING" -> "VERIFIED"
-                    "VERIFIED" -> "ACTION_REQUIRED"
-                    else -> "PENDING"
-                }
+                val nextStatus = if (item.status == "ACTION_REQUIRED") "PENDING" else "ACTION_REQUIRED"
                 item.copy(status = nextStatus)
             } else item
         }
+    }
+
+    fun resetEquipmentChecklist() {
+        _equipmentChecklist.value = _equipmentChecklist.value.map { it.copy(status = "PENDING") }
+    }
+
+    fun toggleWhoItem(id: String) {
+        _whoChecklist.value = _whoChecklist.value.map { item ->
+            if (item.id == id) {
+                val nextStatus = if (item.status == "VERIFIED") "PENDING" else "VERIFIED"
+                item.copy(status = nextStatus)
+            } else item
+        }
+    }
+
+    fun setWhoActionRequired(id: String) {
+        _whoChecklist.value = _whoChecklist.value.map { item ->
+            if (item.id == id) {
+                val nextStatus = if (item.status == "ACTION_REQUIRED") "PENDING" else "ACTION_REQUIRED"
+                item.copy(status = nextStatus)
+            } else item
+        }
+    }
+
+    fun resetWhoChecklist() {
+        _whoChecklist.value = _whoChecklist.value.map { it.copy(status = "PENDING") }
     }
 
     fun saveChecklistRecord(type: String, room: String, verifiedBy: String) {

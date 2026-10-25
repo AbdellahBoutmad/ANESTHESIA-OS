@@ -1,6 +1,6 @@
 {
-  "name": "ANESTHESIA OS",
-  "description": "Plateforme intelligente d'anesthésie et de réanimation - Outils cliniques, protocoles, pharmacologie et check-lists pour IAR et MAR.",
+  "name": "Anestheia Trone",
+  "description": "Anestheia Trone — Plateforme médicale d'anesthésie-réanimation avec assistant IA abdellahTron. Outils cliniques, protocoles, pharmacologie et check-lists.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

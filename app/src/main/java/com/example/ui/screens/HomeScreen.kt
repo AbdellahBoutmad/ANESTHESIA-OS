@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -69,7 +70,9 @@ import com.example.ui.MainViewModel
 import com.example.ui.SubScreen
 import com.example.ui.theme.AlertRed
 import com.example.ui.theme.BorderSubtle
+import com.example.ui.theme.ChampagneGold
 import com.example.ui.theme.DarkNightBlue
+import com.example.ui.theme.ElectricCyan
 import com.example.ui.theme.MedicalCyan
 import com.example.ui.theme.MedicalNavy
 import com.example.ui.theme.MedicalNavyElevated
@@ -241,16 +244,16 @@ fun HomeScreen(viewModel: MainViewModel) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(10.dp)
+                                        .size(8.dp)
                                         .clip(CircleShape)
-                                        .background(TurquoiseGreen)
+                                        .background(ChampagneGold)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    "ANESTHESIA OS",
-                                    color = MedicalCyan,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
+                                    "Anestheia Trone",
+                                    color = ChampagneGold,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.ExtraBold,
                                     letterSpacing = 1.sp
                                 )
                             }
@@ -266,12 +269,12 @@ fun HomeScreen(viewModel: MainViewModel) {
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = MedicalNavySurface,
-                            border = BorderStroke(1.dp, TurquoiseGreen.copy(alpha = 0.4f))
+                            border = BorderStroke(1.dp, ChampagneGold.copy(alpha = 0.45f))
                         ) {
                             Text(
                                 "Bloc Opératoire",
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                color = TurquoiseGreen,
+                                color = ChampagneGold,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -330,6 +333,37 @@ fun HomeScreen(viewModel: MainViewModel) {
             }
         }
 
+        // Creator Signature Card
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = MedicalNavySurface),
+                border = BorderStroke(1.dp, ChampagneGold.copy(alpha = 0.35f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(ChampagneGold)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Conçu et développé par Abdellah Boutmad, étudiant en anesthésie-réanimation (IAR).",
+                        color = PureWhite,
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+
         // 3. Quick Emergency Alert Banner
         item {
             Card(
@@ -375,6 +409,63 @@ fun HomeScreen(viewModel: MainViewModel) {
                         )
                     }
                     Text("OUVRIR", color = AlertRed, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+                }
+            }
+        }
+
+        // 8 Emergency Protocol Quick Chips
+        item {
+            val emergencyProtocols = listOf(
+                "acr_protocol" to "ACR",
+                "anaphylaxis_protocol" to "Anaphylaxie",
+                "cico_protocol" to "CICO",
+                "hypoxemia_protocol" to "Hypoxémie",
+                "hypotension_shock_protocol" to "Choc & TA",
+                "opioid_overdose_protocol" to "Opioïdes",
+                "hyperthermia_protocol" to "Hyperth. Maligne",
+                "respiratory_bronchospasm_protocol" to "Bronchospasme"
+            )
+
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(emergencyProtocols) { (protoId, label) ->
+                    Surface(
+                        modifier = Modifier.clickable {
+                            val p = viewModel.protocolsList.firstOrNull { it.id == protoId }
+                            if (p != null) {
+                                viewModel.selectProtocol(p)
+                            } else {
+                                viewModel.setTab(MainTab.PROTOCOLS)
+                                viewModel.setProtocolCategory("URGENCE_CRISE")
+                            }
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        color = AlertRed.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, AlertRed.copy(alpha = 0.5f))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(AlertRed)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                label,
+                                color = PureWhite,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -495,10 +586,10 @@ fun HomeScreen(viewModel: MainViewModel) {
                     ModuleGridCard(
                         modifier = Modifier.weight(1f),
                         icon = Icons.Default.Psychology,
-                        title = "ANESTHESIA AI",
-                        subtitle = "Assistant intelligent & raisonnement médical",
-                        badge = "IA Médicale",
-                        badgeColor = MedicalCyan,
+                        title = "Assistant IA abdellahTron",
+                        subtitle = "Parler à abdellahTron • Intelligence clinique",
+                        badge = "abdellahTron",
+                        badgeColor = ElectricCyan,
                         onClick = { viewModel.setTab(MainTab.AI) }
                     )
                 }
@@ -622,31 +713,31 @@ fun ModuleGridCard(
 ) {
     Card(
         modifier = modifier
-            .height(138.dp)
+            .heightIn(min = 104.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MedicalNavy),
         border = BorderStroke(1.dp, BorderSubtle)
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp),
+                .fillMaxWidth()
+                .padding(10.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(34.dp)
+                        .size(30.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(badgeColor.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(icon, null, tint = badgeColor, modifier = Modifier.size(20.dp))
+                    Icon(icon, null, tint = badgeColor, modifier = Modifier.size(18.dp))
                 }
 
                 Surface(
@@ -655,7 +746,7 @@ fun ModuleGridCard(
                 ) {
                     Text(
                         badge,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
                         color = badgeColor,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold
@@ -663,13 +754,15 @@ fun ModuleGridCard(
                 }
             }
 
+            Spacer(modifier = Modifier.height(6.dp))
+
             Column {
                 Text(
                     title,
                     color = PureWhite,
-                    fontSize = 13.sp,
+                    fontSize = 12.5.sp,
                     fontWeight = FontWeight.Bold,
-                    lineHeight = 16.sp,
+                    lineHeight = 15.sp,
                     maxLines = 2
                 )
                 Spacer(modifier = Modifier.height(2.dp))

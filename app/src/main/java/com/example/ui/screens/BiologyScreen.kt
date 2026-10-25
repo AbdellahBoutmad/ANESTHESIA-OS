@@ -59,7 +59,9 @@ import com.example.ui.theme.WarningOrange
 @Composable
 fun BiologyScreen() {
     val biologyList = MedicalKnowledgeRepository.biologyTests
-    val categories = listOf("TOUS", "Hématologie", "Hémostase", "Ionogramme", "Fonction Rénale", "Métabolisme")
+    val categories = remember {
+        listOf("TOUS") + biologyList.map { it.category }.distinct()
+    }
     var selectedCategory by remember { mutableStateOf("TOUS") }
 
     val filteredList = biologyList.filter {

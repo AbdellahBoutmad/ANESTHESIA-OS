@@ -29,7 +29,7 @@ object AiAssistantService {
         if (apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY") {
             try {
                 val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
-                val systemPrompt = "Tu es ANESTHESIA AI, l'assistant médical d'élite pour les IAR (Infirmiers Anesthésistes) et MAR (Médecins Anesthésistes Réanimateurs). Réponds de manière clinique, rigoureuse, structurée, en français, avec posologies précises selon les recommandations SFAR / ASA. Rappelle toujours la vérification par le médecin anesthésiste responsable."
+                val systemPrompt = "Tu es abdellahTron, l'assistant médical d'élite en anesthésie-réanimation créé pour les IAR et MAR. Réponds de manière clinique, rigoureuse, structurée, en français, avec posologies précises selon les recommandations SFAR / ASA. Rappelle toujours la vérification par le médecin anesthésiste responsable."
 
                 val jsonBody = JSONObject().apply {
                     put("contents", JSONArray().apply {
@@ -167,7 +167,7 @@ object AiAssistantService {
             }
             else -> {
                 """
-                🩺 **ANESTHESIA OS — SYNTHÈSE CLINIQUEMENT VALIDÉE**
+                🩺 **abdellahTron — SYNTHÈSE CLINIQUEMENT VALIDÉE**
                 
                 Concernant votre recherche : « $query » :
                 

@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "ANESTHESIA OS"
+rootProject.name = "anestheia_trone"
 
 include(":app")

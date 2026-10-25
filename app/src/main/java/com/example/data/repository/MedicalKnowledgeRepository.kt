@@ -504,6 +504,112 @@ object MedicalKnowledgeRepository {
             specificRisks = listOf("Hypotension maternelle brutale", "Détresse foetale par hypoperfusion placentaire", "Hémorragie de la délivrance"),
             postOpMonitoring = listOf("Surveillance hémodynamique et saignement utérin en SSPI pendant au moins 2h", "Surveillance respiratoire (morphine)"),
             guidelinesSource = "SFAR / CNGOF Recommandations pour la pratique clinique en obstétrique."
+        ),
+        ProtocolModel(
+            id = "acr_protocol",
+            title = "Arrêt Cardiorespiratoire (ACR peropératoire)",
+            category = "URGENCE_CRISE",
+            urgencyLevel = "VITALE",
+            subtitle = "Algorithme ERC / SFAR de Réanimation Cardiopulmonaire Avancée",
+            description = "Perte de pouls et tracé d'asystolie, de dissociation électromécanique (DEM) ou de fibrillation ventriculaire (FV) sous anesthésie. Mortalité immédiate sans réanimation synchrone.",
+            algorithmSteps = listOf(
+                "1. ALERTE : Crier « ARRÊT CARDIAQUE », arrêter les anesthésiques, appeler du renfort et amener le DÉFIBRILLATEUR.",
+                "2. MASSAGE CARDIAQUE EXTERNE immédiat (100-120/min, enfoncement 5-6 cm) sans interruption.",
+                "3. OXYGÉNOTHÉRAPIE FiO2 100%, ventilation 10/min sans hyperventilation.",
+                "4. ANALYSE DU RYTHME :",
+                "   - Rythme défibrillable (FV / TV sans pouls) : 1 Choc 200J biphasique, reprise MCE 2 min, Adrénaline 1 mg après 3e choc, Amiodarone 300 mg.",
+                "   - Rythme non défibrillable (Asystolie / DEM) : MCE 2 min, Adrénaline 1 mg IVD immédiate répétée toutes les 3-5 min.",
+                "5. Recherche et traitement des causes réversibles (4H / 4T) : Hypoxie, Hypovolémie, Hyper/hypokaliémie, Hypothermie, Pneumothorax sous Tension, Tamponnade, Thrombose coronarienne/pulmonaire, Toxiques (LAST, curares)."
+            ),
+            keyDrugs = listOf("Adrénaline 1 mg IVD", "Amiodarone 300 mg IV", "Cristalloïdes isotoniques"),
+            specificRisks = listOf("Lésions cérébrales anoxiques", "Côtes fracturées", "Défibrillation inefficace"),
+            postOpMonitoring = listOf("Transfert immédiat en Réanimation chirurgicale", "Contrôle hémodynamique et gazométrique"),
+            guidelinesSource = "European Resuscitation Council (ERC) & SFAR 2025."
+        ),
+        ProtocolModel(
+            id = "hypoxemia_protocol",
+            title = "Hypoxémie Aiguë Peropératoire",
+            category = "URGENCE_CRISE",
+            urgencyLevel = "HAUTE",
+            subtitle = "Chute brutale de la SpO2 < 90% sous anesthésie générale",
+            description = "Désaturation rapide mettant en jeu le pronostic vital. Nécessite une démarche diagnostique méthodique et hiérarchisée en moins de 60 secondes.",
+            algorithmSteps = listOf(
+                "1. FiO2 100% immédiate, débit de gaz frais maximal.",
+                "2. Vérifier le capteur de SpO2 (recul, mauvaise perfusion, vernis).",
+                "3. Examiner la courbe d'EtCO2 et les pressions d'insufflation du respirateur (Paw) :",
+                "   - Pression haute + absence de murmure unilatéral -> Intubation sélective (reculer la sonde de 2 cm) ou Pneumothorax.",
+                "   - Pression haute + râles sibilants expiratoires -> Bronchospasme aigu.",
+                "   - Pression normale + désaturation progressive -> Atélectasies (manœuvre de recrutement alvéolaire, PEP 8 cmH2O).",
+                "4. Auscultation pulmonaire bilatérale immédiate.",
+                "5. Aspiration endotrachéale si encombrement ou bouchon muqueux suspecté."
+            ),
+            keyDrugs = listOf("Oxygène 100%", "Salbutamol si bronchospasme", "Curare si désynchronisation ventilatoire"),
+            specificRisks = listOf("Hypoxie tissulaire", "Arrêt cardiaque hypoxique"),
+            postOpMonitoring = listOf("Radiographie thoracique postopératoire", "Surveillance oxymétrique continue en SSPI"),
+            guidelinesSource = "SFAR / Collège Français des Enseignants d'Anesthésie."
+        ),
+        ProtocolModel(
+            id = "hypotension_shock_protocol",
+            title = "Hypotension Sévère & États de Choc",
+            category = "URGENCE_CRISE",
+            urgencyLevel = "HAUTE",
+            subtitle = "Défaillance hémodynamique peropératoire (PAM < 65 mmHg)",
+            description = "Baisse critique de la perfusion d'organe pouvant résulter d'une vasoplégie, d'une hypovolémie, d'un désamorçage ou d'un choc cardiogénique/anaphylactique.",
+            algorithmSteps = listOf(
+                "1. Vérifier la validité de la mesure (brassard PNI dégonflé, artère clampée).",
+                "2. Diminuer ou arrêter temporairement les anesthésiques (halogénés, propofol).",
+                "3. Première ligne : Bolus de vasopresseur (Éphédrine 3 à 9 mg si FC basse/normale ; Phényléphrine 50 à 100 µg ou Noradrénaline 10 µg si FC tachycarde).",
+                "4. Épreuve de remplissage vasculaire : cristalloïdes 250 à 500 mL en 10 minutes (recherche de baisse de VVS / PPV).",
+                "5. Si hypotension réfractaire : perfusion continue de Noradrénaline au PSE et recherche de saignement occulte, d'anaphylaxie ou de pneumothorax."
+            ),
+            keyDrugs = listOf("Éphédrine 3 mg/mL", "Noradrénaline", "Cristalloïdes isotoniques (Ringer Lactate)"),
+            specificRisks = listOf("Ischémie myocardique", "Insuffisance rénale aiguë par hypoperfusion"),
+            postOpMonitoring = listOf("Contrôle de la diurèse horaire", "Dosage des lactates et de la créatinine"),
+            guidelinesSource = "SFAR Recommandations Hémodynamique périopératoire."
+        ),
+        ProtocolModel(
+            id = "opioid_overdose_protocol",
+            title = "Surdosage en Opioïdes & Dépression Respiratoire",
+            category = "URGENCE_CRISE",
+            urgencyLevel = "HAUTE",
+            subtitle = "Bradypnée postopératoire et sédation excessive",
+            description = "Dépression respiratoire centrale induite par les morphiniques de synthèse (morphine, sufentanil, fentanyl). Triade classique : bradypnée < 8-10/min, myosis serré, sédation profonde.",
+            algorithmSteps = listOf(
+                "1. Stimulation verbale et physique du patient, appel de renfort médical.",
+                "2. Oxygénothérapie au masque à haute concentration (10-15 L/min) ou ventilation au ballon auto-remplisseur (BAVU).",
+                "3. NALOXONE (Narcan®) en TITRATION PRUDENTE :",
+                "   - Diluer 1 ampoule de 0.4 mg dans 9 mL de NaCl 0.9% (soit 0.04 mg/mL = 40 µg/mL).",
+                "   - Injecter 1 à 2 mL (40 à 80 µg) toutes les 2 minutes jusqu'à reprise d'une fréquence respiratoire > 10-12/min sans lever brutal de l'analgésie.",
+                "4. Attention : la durée d'action de la naloxone (30-45 min) est souvent plus courte que celle des morphiniques (risque de ré-endormissement et de rebond).",
+                "5. Maintenir une surveillance oxymétrique et ventilatoire prolongée d'au moins 2 heures."
+            ),
+            keyDrugs = listOf("Naloxone 0.4 mg diluée", "Oxygène 100%"),
+            specificRisks = listOf("Arrêt respiratoire", "Syndrome de sevrage aigu", "Crise hypertensive si titration trop rapide"),
+            postOpMonitoring = listOf("Surveillance en SSPI au moins 2h après la dernière injection de Naloxone"),
+            guidelinesSource = "SFAR / Société Française d'Évaluation et de Traitement de la Douleur."
+        ),
+        ProtocolModel(
+            id = "respiratory_bronchospasm_protocol",
+            title = "Bronchospasme & Laryngospasme Aigu",
+            category = "URGENCE_CRISE",
+            urgencyLevel = "VITALE",
+            subtitle = "Obstruction aiguë des voies aériennes et sifflements expiratoires",
+            description = "Spasme de la musculature bronchique ou fermeture réflexe des cordes vocales lors de l'induction ou de l'extubation.",
+            algorithmSteps = listOf(
+                "1. FiO2 100% immédiate.",
+                "2. En cas de LARYNGOSPASME à l'extubation :",
+                "   - Pression positive continue au masque facial (PEP manuelle 20-30 cmH2O).",
+                "   - Manœuvre de Larson (pression ferme au niveau de l'échancrure rétro-mandibulaire).",
+                "   - Si spasme persistant : Propofol 0.5 à 1 mg/kg ou Célocurine 0.5 à 1 mg/kg IV.",
+                "3. En cas de BRONCHOSPASME peropératoire sous anesthésie générale :",
+                "   - Approfondir l'anesthésie (augmenter le sévoflurane ou bolus de propofol).",
+                "   - Aérosol de Salbutamol (Ventoline) 5 à 10 bouffées directement dans le circuit respiratoire via chambre d'inhalation.",
+                "   - En cas de bronchospasme réfractaire : Kétamine 1 mg/kg IV et Sulfate de magnésium 2 g IV lente."
+            ),
+            keyDrugs = listOf("Salbutamol spray / IV", "Propofol", "Kétamine", "Célocurine (en sauvetage)"),
+            specificRisks = listOf("Oedème pulmonaire a vacuo (pression négative)", "Hypoxie sévère"),
+            postOpMonitoring = listOf("Surveillance respiratoire prolongée", "Contrôle radiologique si suspicion d'OAP a vacuo"),
+            guidelinesSource = "SFAR Prise en charge des complications respiratoires peropératoires."
         )
     )
 
@@ -555,6 +661,90 @@ object MedicalKnowledgeRepository {
             requiresPostponementOrOptimization = true,
             optimizationCriteria = "Chirurgie réglée : reporter si K+ < 3.0 mmol/L (correction IV lente avec monitorage) ou si K+ > 5.5 mmol/L (risque d'arrêt cardiaque, CONTRE-INDICATION ABSOLUE à la Célocurine).",
             medicalSource = "SFAR - Troubles ioniques périopératoires."
+        ),
+        BiologyTestModel(
+            id = "sodium",
+            name = "Natrémie (Na+)",
+            category = "Ionogramme",
+            normalRange = "135 - 145",
+            unit = "mmol/L",
+            anestheticImplications = "Régule l'osmolalité plasmatique. L'hyponatrémie sévère (< 130 mmol/L) expose au risque de confusion, coma et œdème cérébral. Risque accru lors de la réabsorption de liquide d'irrigation (TURP syndrome).",
+            frequentCausesOfAnomaly = "Syndrome de levée d'obstacle, diurétiques thiazidiques, perfusion excessive de solutés hypotoniques, SIADH.",
+            requiresPostponementOrOptimization = true,
+            optimizationCriteria = "Reporter la chirurgie élective si Na+ < 130 mmol/L pour correction progressive (ne pas dépasser 8-10 mmol/L/24h pour éviter la myélinolyse centropontine).",
+            medicalSource = "SFAR / Collège Français d'Anesthésie-Réanimation."
+        ),
+        BiologyTestModel(
+            id = "calcium_magnesium",
+            name = "Calcémie Totale & Ionisée",
+            category = "Ionogramme",
+            normalRange = "Total : 2.20 - 2.60 mmol/L | Ionisé : 1.15 - 1.35 mmol/L",
+            unit = "mmol/L",
+            anestheticImplications = "Rôle fondamental dans l'inotropisme cardiaque, le tonus vasculaire et la cascade de coagulation. L'hypocalcémie aiguë (fréquente lors des transfusions massives de culots citratés) aggrave le choc et l'hypotension.",
+            frequentCausesOfAnomaly = "Transfusion massive (chélation par le citrate), hypoparathyroïdie, pancréatite aiguë, hypoalbuminémie.",
+            requiresPostponementOrOptimization = false,
+            optimizationCriteria = "En peropératoire lors de transfusion massive : compenser par 1 g de Chlorure de Calcium IVD lente tous les 2 à 4 CGR sous contrôle de la calcémie ionisée.",
+            medicalSource = "SFAR - Réanimation transfusionnelle peropératoire."
+        ),
+        BiologyTestModel(
+            id = "blood_gas",
+            name = "Gaz du Sang Artériel & Lactates",
+            category = "Gazométrie",
+            normalRange = "pH : 7.35-7.45 | PaO2 : 80-100 mmHg | PaCO2 : 35-45 mmHg | HCO3- : 22-26 mmol/L | Lactate < 2.0 mmol/L",
+            unit = "mmHg / mmol/L",
+            anestheticImplications = "Évalue l'oxygénation, la ventilation alvéolaire et l'équilibre acido-basique. Une hyperlactatémie (> 2.0-3.0 mmol/L) reflète une hypoperfusion tissulaire ou une dette en oxygène.",
+            frequentCausesOfAnomaly = "Hypoventilation (hypercapnie), atélectasies, état de choc (acidose lactique), ischémie mésentérique.",
+            requiresPostponementOrOptimization = true,
+            optimizationCriteria = "Une acidose métabolique sévère (pH < 7.20, lactates élevés) en chirurgie réglée impose le report et l'exploration immédiate de la cause hémodynamique ou septique.",
+            medicalSource = "SFAR / SRLF - Monitorage gazométrique en réanimation."
+        ),
+        BiologyTestModel(
+            id = "troponin",
+            name = "Troponine Cardiaque Hypersensible (hs-cTn)",
+            category = "Marqueurs Cardiaques",
+            normalRange = "hs-cTnI < 14 ng/L | hs-cTnT < 14 ng/L",
+            unit = "ng/L (ou pg/mL)",
+            anestheticImplications = "Marqueur hautement sensible de nécrose myocardique. L'élévation isolée périopératoire (MINS - Myocardial Injury after Non-cardiac Surgery) est un prédicteur majeur de morbi-mortalité à 30 jours.",
+            frequentCausesOfAnomaly = "Syndrome coronarien aigu, tachycardie soutenue, choc septique, embolie pulmonaire, insuffisance rénale sévère.",
+            requiresPostponementOrOptimization = true,
+            optimizationCriteria = "Toute élévation inexpliquée en préopératoire d'une chirurgie réglée impose le report et une consultation cardiologique en urgence avec ECG et coronarographie éventuelle.",
+            medicalSource = "ESC / ESAIC Guidelines on Perioperative Cardiovascular Evaluation."
+        ),
+        BiologyTestModel(
+            id = "bnp",
+            name = "Peptides Natriurétiques (BNP & NT-proBNP)",
+            category = "Marqueurs Cardiaques",
+            normalRange = "BNP < 100 pg/mL | NT-proBNP < 300 pg/mL",
+            unit = "pg/mL",
+            anestheticImplications = "Reflète la contrainte pariétale ventriculaire gauche et l'insuffisance cardiaque. Prédicteur indépendant de décompensation cardiaque et d'œdème aigu pulmonaire postopératoire.",
+            frequentCausesOfAnomaly = "Insuffisance cardiaque congestive, rétrécissement aortique serré, fibrillation atriale, âge avancé.",
+            requiresPostponementOrOptimization = true,
+            optimizationCriteria = "Un taux de NT-proBNP > 1000 pg/mL en préopératoire nécessite une échocardiographie transthoracique et une optimisation du traitement cardiologique avant chirurgie majeure.",
+            medicalSource = "SFAR / Société Française de Cardiologie (SFC)."
+        ),
+        BiologyTestModel(
+            id = "hepatic_panel",
+            name = "Bilan Hépatique (ALAT, ASAT, Bilirubine)",
+            category = "Fonction Hépatique",
+            normalRange = "ALAT < 45 UI/L | ASAT < 35 UI/L | Bilirubine totale < 21 µmol/L",
+            unit = "UI/L / µmol/L",
+            anestheticImplications = "Conditionne le métabolisme hépatique de la majorité des hypnotiques, morphiniques et curares, ainsi que la synthèse des facteurs de coagulation.",
+            frequentCausesOfAnomaly = "Hépatite médicamenteuse, stéatohépatite, cirrhose hépatique, lithiase biliaire obstructive.",
+            requiresPostponementOrOptimization = true,
+            optimizationCriteria = "Une cytolyse aiguë > 3 à 5 fois la normale en chirurgie réglée impose le report pour diagnostic étiologique et éviction des anesthésiques potentiellement hépatotoxiques.",
+            medicalSource = "SFAR / AFEF - Anesthésie du patient avec atteinte hépatique."
+        ),
+        BiologyTestModel(
+            id = "blood_group_rai",
+            name = "Groupe Sanguin ABO-Rh & Recherche d'Agglutinines Irrégulières (RAI)",
+            category = "Immuno-Hématologie",
+            normalRange = "RAI Négatives | Validité < 72 heures",
+            unit = "Validation",
+            anestheticImplications = "Indispensable pour toute chirurgie à risque transfusionnel prévisible. Garantit la délivrance immédiate de Concentrés de Globules Rouges (CGR) compatibles sans accident d'hémolyse immuno-immunologique.",
+            frequentCausesOfAnomaly = "Antécédent de transfusion ou de grossesse ayant induit une allo-immunisation anti-érythrocytaire.",
+            requiresPostponementOrOptimization = true,
+            optimizationCriteria = "En cas de RAI positive, le laboratoire transfusionnel (EFS) doit identifier l'anticorps et réserver des CGR phénotypés compatibles avant toute incision chirurgicale.",
+            medicalSource = "Recommandations Haute Autorité de Santé (HAS) & EFS Sécurité Transfusionnelle."
         ),
         BiologyTestModel(
             id = "creatinine_dfg",

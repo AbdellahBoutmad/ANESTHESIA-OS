@@ -8,37 +8,37 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = MedicalCyan,
-    onPrimary = DarkNightBlue,
-    primaryContainer = MedicalNavyElevated,
-    onPrimaryContainer = MedicalCyan,
-    secondary = TurquoiseGreen,
-    onSecondary = DarkNightBlue,
-    secondaryContainer = MedicalNavySurface,
-    onSecondaryContainer = TurquoiseGreen,
-    tertiary = WarningOrange,
-    onTertiary = DarkNightBlue,
+    primary = MedicalTeal,
+    onPrimary = MidnightNavy,
+    primaryContainer = DeepNavyElevated,
+    onPrimaryContainer = MedicalTeal,
+    secondary = ChampagneGold,
+    onSecondary = MidnightNavy,
+    secondaryContainer = DeepNavySurface,
+    onSecondaryContainer = ChampagneGold,
+    tertiary = ChampagneGold,
+    onTertiary = MidnightNavy,
     error = AlertRed,
-    onError = PureWhite,
-    background = DarkNightBlue,
-    onBackground = PureWhite,
-    surface = MedicalNavy,
-    onSurface = PureWhite,
-    surfaceVariant = MedicalNavySurface,
-    onSurfaceVariant = SecondaryGrey,
+    onError = SoftWhite,
+    background = MidnightNavy,
+    onBackground = SoftWhite,
+    surface = DeepNavy,
+    onSurface = SoftWhite,
+    surfaceVariant = DeepNavySurface,
+    onSurfaceVariant = SlateGray,
     outline = BorderSubtle
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = LightPrimaryCyan,
+    primary = LightPrimaryTeal,
     onPrimary = Color.White,
     primaryContainer = LightSurfaceVariant,
-    onPrimaryContainer = DarkNightBlue,
-    secondary = TurquoiseGreen,
+    onPrimaryContainer = LightTextPrimary,
+    secondary = LightGold,
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFDFF8F4),
-    onSecondaryContainer = DarkNightBlue,
-    tertiary = WarningOrange,
+    secondaryContainer = Color(0xFFF1E8D9),
+    onSecondaryContainer = LightTextPrimary,
+    tertiary = LightGold,
     onTertiary = Color.White,
     error = AlertRed,
     onError = Color.White,
@@ -52,8 +52,8 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun AnesthesiaOsTheme(
-    darkTheme: Boolean = true, // Default to deep medical dark mode as requested in specs
+fun AnestheiaTroneTheme(
+    darkTheme: Boolean = true, // Thème sombre par défaut pour l'esthétique Tron médicale
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
@@ -65,11 +65,20 @@ fun AnesthesiaOsTheme(
     )
 }
 
+// Alias pour préserver les usages existants
+@Composable
+fun AnesthesiaOsTheme(
+    darkTheme: Boolean = true,
+    content: @Composable () -> Unit
+) {
+    AnestheiaTroneTheme(darkTheme = darkTheme, content = content)
+}
+
 @Composable
 fun MyApplicationTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    AnesthesiaOsTheme(darkTheme = darkTheme, content = content)
+    AnestheiaTroneTheme(darkTheme = darkTheme, content = content)
 }
