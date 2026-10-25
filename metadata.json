@@ -1,0 +1,6 @@
+{
+  "name": "ANESTHESIA OS",
+  "description": "Plateforme intelligente d'anesthésie et de réanimation - Outils cliniques, protocoles, pharmacologie et check-lists pour IAR et MAR.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
