@@ -795,10 +795,10 @@ fun ConsultationWizard(
                             Text("Poids : ${weight} kg | Taille : ${height} cm | IMC : ${bmiResult.bmi} kg/m²", color = SecondaryGrey, fontSize = 12.sp)
                             Text("Voies Aériennes : $mallampati, ouverture $mouthOpening", color = SecondaryGrey, fontSize = 12.sp)
                             if (diffAirway) {
-                                Text("⚠️ ALERTE : Intubation difficile prévisible", color = AlertRed, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text("ALERTE : Intubation difficile prévisible", color = AlertRed, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                             if (aspirationRisk) {
-                                Text("⚠️ ALERTE : Risque d'inhalation (ISR requise)", color = AlertRed, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text("ALERTE : Risque d'inhalation (ISR requise)", color = AlertRed, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                         }
                     }

@@ -35,6 +35,8 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Vaccines
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Biotech
@@ -593,6 +595,60 @@ fun HomeScreen(viewModel: MainViewModel) {
                         onClick = { viewModel.setTab(MainTab.AI) }
                     )
                 }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Ligne 5: Nouveaux modules de simulation
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    ModuleGridCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Default.Air,
+                        title = "Simulateur de Ventilation",
+                        subtitle = "VC, VACI, VSAI, courbes Paw & PEP",
+                        badge = "Simulateur",
+                        badgeColor = MedicalCyan,
+                        onClick = { viewModel.openSubScreen(SubScreen.VENTILATION_SIMULATOR) }
+                    )
+                    ModuleGridCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Outlined.MonitorHeart,
+                        title = "ECG Challenge",
+                        subtitle = "Tracés de scope, diagnostics & urgences",
+                        badge = "Défi ECG",
+                        badgeColor = AlertRed,
+                        onClick = { viewModel.openSubScreen(SubScreen.ECG_CHALLENGE) }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Ligne 6: Anesthesia Timeline & Traducteur
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    ModuleGridCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Default.Timeline,
+                        title = "Déroulement de l'anesthésie",
+                        subtitle = "Les 7 étapes chronologiques du parcours",
+                        badge = "7 Étapes",
+                        badgeColor = ChampagneGold,
+                        onClick = { viewModel.openSubScreen(SubScreen.ANESTHESIA_TIMELINE) }
+                    )
+                    ModuleGridCard(
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Default.Translate,
+                        title = "Medical Translator",
+                        subtitle = "Français / العربية / الدارجة Marocaine",
+                        badge = "Trilingue",
+                        badgeColor = TurquoiseGreen,
+                        onClick = { viewModel.openSubScreen(SubScreen.MEDICAL_TRANSLATOR) }
+                    )
+                }
             }
         }
 
@@ -601,13 +657,14 @@ fun HomeScreen(viewModel: MainViewModel) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .clickable { viewModel.openSubScreen(SubScreen.ANESTHESIA_TIMELINE) },
                 colors = CardDefaults.cardColors(containerColor = MedicalNavySurface),
                 border = BorderStroke(1.dp, BorderSubtle)
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
                     Text(
-                        "PARCOURS PÉRIOPÉRATOIRE INTÉGRÉ",
+                        "DÉROULEMENT DE L'ANESTHÉSIE — 7 ÉTAPES",
                         color = TurquoiseGreen,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -615,11 +672,13 @@ fun HomeScreen(viewModel: MainViewModel) {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     val steps = listOf(
-                        "1. Consultation" to "Évaluation ASA & Risques",
-                        "2. Préparation" to "Check-list Respirateur & Drogues",
-                        "3. Sign In" to "Check-list Sécurité OMS",
-                        "4. Bloc Opératoire" to "Induction & Time Out",
-                        "5. SSPI Réveil" to "Score d'Aldrete >= 9/10"
+                        "1. Consultation préanesthésique" to "Évaluation ASA, voies aériennes & jeûne",
+                        "2. Préparation préopératoire" to "Contrôle respirateur, drogues & matériel",
+                        "3. Accueil & Installation" to "Identitovigilance & prévention des lésions",
+                        "4. Induction anesthésique" to "Pré-oxygénation, analgésie, narcose & IOT",
+                        "5. Entretien anesthésique" to "Ventilation protectrice & hémodynamique",
+                        "6. Réveil & Extubation" to "Décurarisation TOF > 90% & sécurité",
+                        "7. Transfert en SSPI" to "Transmission formalisée & Aldrete >= 9/10"
                     )
 
                     steps.forEachIndexed { idx, pair ->

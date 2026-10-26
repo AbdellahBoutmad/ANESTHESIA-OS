@@ -74,7 +74,7 @@ fun AiAssistantScreen(viewModel: MainViewModel) {
 
     val quickPrompts = listOf(
         "Parler à abdellahTron : Calcul dose Propofol",
-        "🚨 Protocole Anaphylaxie Grade III",
+        "Protocole Anaphylaxie Grade III",
         "Algorithme CICO (Intubation impossible)",
         "Critères de sortie de SSPI (Aldrete)",
         "Contre-indications Célocurine",

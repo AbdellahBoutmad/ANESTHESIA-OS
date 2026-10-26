@@ -69,9 +69,10 @@ fun ProtocolsScreen(viewModel: MainViewModel) {
     val selectedProtocol by viewModel.selectedProtocol.collectAsState()
     val activeSubScreen by viewModel.activeSubScreen.collectAsState()
 
-    val categories = listOf("TOUS", "URGENCE_CRISE", "CHIRURGIE")
+    val categories = listOf("TOUS", "URGENCE_CRISE", "CHIRURGIE", "OBSTETRIQUE", "REANIMATION")
 
-    val filteredProtocols = viewModel.protocolsList.filter {
+    val roomProtocols by viewModel.offlineProtocols.collectAsState()
+    val filteredProtocols = roomProtocols.filter {
         selectedCategory == "TOUS" || it.category == selectedCategory
     }
 
@@ -110,8 +111,8 @@ fun ProtocolsScreen(viewModel: MainViewModel) {
                 ) {
                     items(categories) { cat ->
                         val label = when (cat) {
-                            "URGENCE_CRISE" -> "🚨 Urgences & Crises"
-                            "CHIRURGIE" -> "🏥 Chirurgies"
+                            "URGENCE_CRISE" -> "Urgences & Crises"
+                            "CHIRURGIE" -> "Chirurgies"
                             else -> "Tous les protocoles"
                         }
                         FilterChip(

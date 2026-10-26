@@ -75,7 +75,7 @@ object AiAssistantService {
         return when {
             q.contains("anaphylax") || q.contains("choc") -> {
                 """
-                🚨 **PROTOCOLE CHOC ANAPHYLACTIQUE AU BLOC OPÉRATOIRE (SFAR)**
+                **PROTOCOLE CHOC ANAPHYLACTIQUE AU BLOC OPÉRATOIRE (SFAR)**
                 
                 1. **Arrêt immédiat** de tout produit suspect (curare, antibiotique, latex, produit de contraste).
                 2. **Alerte :** Appeler du renfort médical immédiatement + chariot d'urgence.
@@ -92,7 +92,7 @@ object AiAssistantService {
             }
             q.contains("cico") || q.contains("intubation impossible") || q.contains("voies aériennes") -> {
                 """
-                🚨 **ALGORITHME CICO (Cannot Intubate Cannot Oxygenate - SFAR / DAS)**
+                **ALGORITHME CICO (Cannot Intubate Cannot Oxygenate - SFAR / DAS)**
                 
                 1. Déclarer à voix haute dans la salle : **« INTUBATION IMPOSSIBLE, OXYGÉNATION IMPOSSIBLE »**.
                 2. Appeler du renfort immédiatement + faire apporter le chariot de sauvetage VAS.
@@ -109,7 +109,7 @@ object AiAssistantService {
             }
             q.contains("propofol") || q.contains("induction") -> {
                 """
-                💊 **FICHE CLINIQUE PROPOFOL (Diprivan®)**
+                **FICHE CLINIQUE PROPOFOL (Diprivan®)**
                 
                 - **Classe :** Hypnotique intraveineux à action rapide.
                 - **Posologie induction adulte sain :** 1.5 à 2.5 mg/kg IVD lente.
@@ -123,7 +123,7 @@ object AiAssistantService {
             }
             q.contains("curare") || q.contains("rocuronium") || q.contains("sugammadex") -> {
                 """
-                ⚡ **CURARISATION & DÉCURARISATION (SFAR)**
+                **CURARISATION & DÉCURARISATION (SFAR)**
                 
                 - **Rocuronium (Esmeron®) :**
                   * Induction standard : 0.6 mg/kg (délai 90s, durée 35-45 min).
@@ -137,7 +137,7 @@ object AiAssistantService {
             }
             q.contains("aldrete") || q.contains("sspi") || q.contains("extubation") -> {
                 """
-                📋 **CRITÈRES DE SORTIE DE SSPI (SCORE D'ALDRETE MODIFIÉ)**
+                **CRITÈRES DE SORTIE DE SSPI (SCORE D'ALDRETE MODIFIÉ)**
                 
                 Le score évalue 5 items cotés de 0 à 2 :
                 1. **Activité motrice :** 2 = bouge les 4 membres volontairement.
@@ -151,7 +151,7 @@ object AiAssistantService {
             }
             q.contains("mallampati") || q.contains("intubation difficile") -> {
                 """
-                🔍 **ÉVALUATION DES VOIES AÉRIENNES & MALLAMPATI**
+                **ÉVALUATION DES VOIES AÉRIENNES & MALLAMPATI**
                 
                 - **Mallampati I :** Visibilité des piliers amygdaliens, du voile du palais et de la luette complète.
                 - **Mallampati II :** Visibilité du voile et de la luette.

@@ -45,10 +45,21 @@ interface ChecklistDao {
     fun getCompletedCount(): Flow<Int>
 }
 
-@Database(entities = [PatientAssessment::class, ChecklistRecord::class], version = 1, exportSchema = false)
+@Database(
+    entities = [
+        PatientAssessment::class,
+        ChecklistRecord::class,
+        DrugEntity::class,
+        ProtocolEntity::class
+    ],
+    version = 2,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun patientDao(): PatientDao
     abstract fun checklistDao(): ChecklistDao
+    abstract fun drugDao(): DrugDao
+    abstract fun protocolDao(): ProtocolDao
 
     companion object {
         @Volatile
@@ -60,7 +71,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "anesthesia_os_database"
-                ).build()
+                )
+                .fallbackToDestructiveMigration()
+                .build()
                 INSTANCE = instance
                 instance
             }

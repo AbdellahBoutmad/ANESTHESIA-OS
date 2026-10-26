@@ -88,11 +88,16 @@ fun PharmacologyScreen(viewModel: MainViewModel) {
         "Curares",
         "Antagonistes",
         "Vasopresseurs & Inotropes",
+        "Anesthésiques locaux",
+        "Antiémétiques",
+        "Analgésiques",
+        "Hémostatiques & Antidotes",
         "Médicaments d'urgence",
         "Anesthésiques inhalés"
     )
 
-    val filteredDrugs = viewModel.drugsList.filter {
+    val roomDrugs by viewModel.offlineDrugs.collectAsState()
+    val filteredDrugs = roomDrugs.filter {
         selectedCategory == "TOUS" || it.category == selectedCategory
     }
 

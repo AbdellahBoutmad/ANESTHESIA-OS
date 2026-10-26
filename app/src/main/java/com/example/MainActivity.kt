@@ -1,5 +1,7 @@
 package com.example
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -26,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.AssignmentTurnedIn
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Calculate
@@ -36,16 +39,21 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalHospital
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Biotech
 import androidx.compose.material.icons.outlined.Checklist
+import androidx.compose.material.icons.outlined.MonitorHeart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -77,6 +85,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -85,20 +94,26 @@ import com.example.ui.MainTab
 import com.example.ui.MainViewModel
 import com.example.ui.SubScreen
 import com.example.ui.screens.AiAssistantScreen
+import com.example.ui.screens.AnesthesiaTimelineScreen
 import com.example.ui.screens.BiologyScreen
 import com.example.ui.screens.CalculatorsScreen
 import com.example.ui.screens.ChecklistScreen
+import com.example.ui.screens.EcgChallengeScreen
 import com.example.ui.screens.HomeScreen
+import com.example.ui.screens.MedicalTranslatorScreen
 import com.example.ui.screens.PatientsScreen
 import com.example.ui.screens.PharmacologyScreen
 import com.example.ui.screens.ProtocolsScreen
+import com.example.ui.screens.ThemeChooserDialog
 import com.example.ui.screens.TrainingScreen
+import com.example.ui.screens.VentilationSimulatorScreen
 import com.example.ui.theme.AlertRed
 import com.example.ui.theme.AnesthesiaOsTheme
 import com.example.ui.theme.AnestheiaTroneTheme
 import com.example.ui.theme.BorderSubtle
 import com.example.ui.theme.ChampagneGold
 import com.example.ui.theme.DarkNightBlue
+import com.example.ui.theme.DeepNavy
 import com.example.ui.theme.DeepNavyElevated
 import com.example.ui.theme.DeepNavySurface
 import com.example.ui.theme.ElectricCyan
@@ -112,6 +127,8 @@ import com.example.ui.theme.PureWhite
 import com.example.ui.theme.SecondaryGrey
 import com.example.ui.theme.SlateGray
 import com.example.ui.theme.SoftWhite
+import com.example.ui.theme.SurfaceCard
+import com.example.ui.theme.InfoBlue
 import com.example.ui.theme.TurquoiseGreen
 import kotlinx.coroutines.launch
 
@@ -125,16 +142,30 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            AnesthesiaOsTheme(darkTheme = true) {
+            val currentPalette by viewModel.themePalette.collectAsState()
+            val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+
+            AnestheiaTroneTheme(palette = currentPalette, darkTheme = isDarkTheme) {
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
                 var showAboutDialog by remember { mutableStateOf(false) }
+                var showThemeDialog by remember { mutableStateOf(false) }
 
                 val currentTab by viewModel.currentTab.collectAsState()
                 val activeSubScreen by viewModel.activeSubScreen.collectAsState()
 
                 if (showAboutDialog) {
                     AboutDialog(onDismiss = { showAboutDialog = false })
+                }
+
+                if (showThemeDialog) {
+                    ThemeChooserDialog(
+                        currentPalette = currentPalette,
+                        isDarkTheme = isDarkTheme,
+                        onPaletteSelect = { viewModel.setThemePalette(it) },
+                        onDarkThemeToggle = { viewModel.toggleDarkTheme(it) },
+                        onDismiss = { showThemeDialog = false }
+                    )
                 }
 
                 // Intercept Android Back Button for sub-screens
@@ -163,6 +194,10 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onOpenAbout = {
                                     showAboutDialog = true
+                                    scope.launch { drawerState.close() }
+                                },
+                                onOpenTheme = {
+                                    showThemeDialog = true
                                     scope.launch { drawerState.close() }
                                 }
                             )
@@ -253,6 +288,41 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 actions = {
+                                    Surface(
+                                        onClick = { showAboutDialog = true },
+                                        shape = RoundedCornerShape(8.dp),
+                                        color = ChampagneGold.copy(alpha = 0.18f),
+                                        border = BorderStroke(1.dp, ChampagneGold.copy(alpha = 0.7f)),
+                                        modifier = Modifier
+                                            .padding(end = 4.dp)
+                                            .testTag("top_about_button")
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 5.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Info,
+                                                contentDescription = "À propos",
+                                                tint = ChampagneGold,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                text = "À propos",
+                                                color = ChampagneGold,
+                                                fontSize = 11.5.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+
+                                    IconButton(
+                                        onClick = { showThemeDialog = true },
+                                        modifier = Modifier.testTag("top_theme_button")
+                                    ) {
+                                        Icon(Icons.Default.Palette, contentDescription = "Thème & Couleurs", tint = ChampagneGold, modifier = Modifier.size(19.dp))
+                                    }
                                     IconButton(
                                         onClick = {
                                             viewModel.setTab(MainTab.PROTOCOLS)
@@ -262,12 +332,12 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         Box(
                                             modifier = Modifier
-                                                .size(34.dp)
+                                                .size(32.dp)
                                                 .clip(CircleShape)
                                                 .background(AlertRed.copy(alpha = 0.2f)),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Icon(Icons.Default.Emergency, contentDescription = "Urgences Vitales", tint = AlertRed, modifier = Modifier.size(20.dp))
+                                            Icon(Icons.Default.Emergency, contentDescription = "Urgences Vitales", tint = AlertRed, modifier = Modifier.size(18.dp))
                                         }
                                     }
                                 },
@@ -333,6 +403,10 @@ class MainActivity : ComponentActivity() {
                                 SubScreen.BIOLOGY -> BiologyScreen()
                                 SubScreen.CALCULATORS -> CalculatorsScreen()
                                 SubScreen.QUIZ -> TrainingScreen(viewModel = viewModel)
+                                SubScreen.VENTILATION_SIMULATOR -> VentilationSimulatorScreen(viewModel = viewModel, onBack = { viewModel.closeSubScreen() })
+                                SubScreen.ECG_CHALLENGE -> EcgChallengeScreen(viewModel = viewModel, onBack = { viewModel.closeSubScreen() })
+                                SubScreen.ANESTHESIA_TIMELINE -> AnesthesiaTimelineScreen(viewModel = viewModel, onBack = { viewModel.closeSubScreen() })
+                                SubScreen.MEDICAL_TRANSLATOR -> MedicalTranslatorScreen(viewModel = viewModel, onBack = { viewModel.closeSubScreen() })
                                 else -> {
                                     // Primary tabs
                                     when (currentTab) {
@@ -360,6 +434,10 @@ class MainActivity : ComponentActivity() {
             SubScreen.CONSULTATION_WIZARD -> "Consultation"
             SubScreen.DRUG_DETAIL -> "Pharmaco"
             SubScreen.PROTOCOL_DETAIL -> "Protocole"
+            SubScreen.VENTILATION_SIMULATOR -> "Ventilation"
+            SubScreen.ECG_CHALLENGE -> "ECG Challenge"
+            SubScreen.ANESTHESIA_TIMELINE -> "Timeline"
+            SubScreen.MEDICAL_TRANSLATOR -> "Traducteur"
             SubScreen.NONE -> {
                 when (tab) {
                     MainTab.HOME -> "Tableau de bord"
@@ -386,7 +464,8 @@ fun DrawerContent(
     activeSubScreen: SubScreen,
     onSelectTab: (MainTab) -> Unit,
     onOpenSubScreen: (SubScreen) -> Unit,
-    onOpenAbout: () -> Unit
+    onOpenAbout: () -> Unit,
+    onOpenTheme: () -> Unit
 ) {
     val scrollState = rememberScrollState()
 
@@ -487,6 +566,24 @@ fun DrawerContent(
         }
 
         Spacer(modifier = Modifier.height(14.dp))
+        DrawerSectionHeader("SIMULATION & PRATIQUE CLINIQUE")
+        DrawerItem("Simulateur de Ventilation", Icons.Default.Air, activeSubScreen == SubScreen.VENTILATION_SIMULATOR) {
+            onOpenSubScreen(SubScreen.VENTILATION_SIMULATOR)
+        }
+        DrawerItem("ECG Challenge (Rythmes)", Icons.Outlined.MonitorHeart, activeSubScreen == SubScreen.ECG_CHALLENGE) {
+            onOpenSubScreen(SubScreen.ECG_CHALLENGE)
+        }
+        DrawerItem("Déroulement de l'anesthésie (7 étapes)", Icons.Default.Timeline, activeSubScreen == SubScreen.ANESTHESIA_TIMELINE) {
+            onOpenSubScreen(SubScreen.ANESTHESIA_TIMELINE)
+        }
+        DrawerItem("Medical Translator (FR/AR/Darija)", Icons.Default.Translate, activeSubScreen == SubScreen.MEDICAL_TRANSLATOR) {
+            onOpenSubScreen(SubScreen.MEDICAL_TRANSLATOR)
+        }
+        DrawerItem("Thème & Couleurs", Icons.Default.Palette, false) {
+            onOpenTheme()
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
         DrawerSectionHeader("INFORMATIONS & CRÉDITS")
         DrawerItem("À propos d'Anestheia Trone", Icons.Default.Info, false) {
             onOpenAbout()
@@ -530,34 +627,27 @@ fun DrawerContent(
 
 @Composable
 fun AboutDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    var emailStatusMessage by remember { mutableStateOf<String?>(null) }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(38.dp)
+                        .size(36.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(MedicalTeal.copy(alpha = 0.15f))
                         .border(BorderStroke(1.dp, ChampagneGold.copy(alpha = 0.6f)), RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.LocalHospital, null, tint = MedicalTeal, modifier = Modifier.size(22.dp))
+                    Icon(Icons.Default.Info, contentDescription = "À propos", tint = MedicalTeal, modifier = Modifier.size(20.dp))
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Anestheia Trone", color = SoftWhite, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = ChampagneGold.copy(alpha = 0.2f),
-                            border = BorderStroke(0.5.dp, ChampagneGold)
-                        ) {
-                            Text("PRO", modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp), color = ChampagneGold, fontSize = 8.5.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                    Text("Plateforme d'anesthésie-réanimation × abdellahTron", color = ChampagneGold, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                    Text("À propos — Anestheia Trone", color = SoftWhite, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Abdellah Boutmad • IAR", color = ChampagneGold, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                 }
             }
         },
@@ -566,89 +656,88 @@ fun AboutDialog(onDismiss: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = DeepNavySurface,
-                    border = BorderStroke(1.dp, ChampagneGold.copy(alpha = 0.4f))
+                    shape = RoundedCornerShape(10.dp),
+                    color = SurfaceCard,
+                    border = BorderStroke(1.dp, ChampagneGold.copy(alpha = 0.5f))
                 ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
+                    Column(modifier = Modifier.padding(14.dp)) {
                         Text(
-                            "MENTION OFFICIELLE DU CRÉATEUR",
-                            color = ChampagneGold,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 10.sp,
-                            letterSpacing = 0.5.sp
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            "Conçu et développé par Abdellah Boutmad, étudiant en anesthésie-réanimation (IAR).",
+                            text = "hi there I'm abdellah thanks for using my app ila kan 3ndk chi chose a ajouter fhad application ola chi error \"bug\" lgitih sifto liya :boutabd6@gmail.com \nZERO COMPLICATIONS IS THE GOAL. PATIENT bikhir IS THE PRIORITY. \nCreated by Abdellah Boutmad\nIAR • Anesthésie-Réanimation",
                             color = SoftWhite,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 12.5.sp,
-                            lineHeight = 17.sp
+                            fontSize = 13.sp,
+                            lineHeight = 20.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                if (emailStatusMessage != null) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = AlertRed.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, AlertRed.copy(alpha = 0.4f))
+                    ) {
+                        Text(
+                            text = emailStatusMessage ?: "",
+                            color = AlertRed,
+                            fontSize = 11.5.sp,
+                            modifier = Modifier.padding(10.dp)
                         )
                     }
                 }
 
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = DeepNavySurface,
-                    border = BorderStroke(1.dp, MedicalTeal.copy(alpha = 0.3f))
-                ) {
-                    Column(modifier = Modifier.padding(10.dp)) {
-                        Text("IDENTITÉ DE L'ÉCOSYSTÈME :", color = MedicalTeal, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("• Application : Anestheia Trone (anestheia_trone)", color = SoftWhite, fontSize = 11.5.sp)
-                        Text("• Assistant IA intégré : abdellahTron", color = ElectricCyan, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold)
-                        Text("• Domaine : Anesthésie, réanimation & soins critiques", color = SlateGray, fontSize = 11.sp)
-                    }
-                }
-
-                Text(
-                    "Anestheia Trone est une plateforme clinique et pédagogique conçue pour les infirmiers anesthésistes (IAR), les médecins anesthésistes-réanimateurs (MAR) et les étudiants. Elle centralise les protocoles d'urgence, la pharmacologie pondérale, la check-list du respirateur et les examens biologiques.",
-                    color = SlateGray,
-                    fontSize = 11.5.sp,
-                    lineHeight = 16.sp
-                )
-
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = AlertRed.copy(alpha = 0.12f),
-                    border = BorderStroke(1.dp, AlertRed.copy(alpha = 0.35f))
+                    color = SurfaceCard,
+                    border = BorderStroke(1.dp, BorderSubtle)
                 ) {
                     Row(
                         modifier = Modifier.padding(10.dp),
-                        verticalAlignment = Alignment.Top
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Warning, null, tint = AlertRed, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.LocalHospital, contentDescription = null, tint = MedicalTeal, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "Avis médical : Cet outil est destiné à l'aide à la décision et à la formation. Il ne remplace en aucun cas le jugement clinique ni la décision thérapeutique du médecin anesthésiste-réanimateur responsable.",
-                            color = SoftWhite,
-                            fontSize = 11.sp,
-                            lineHeight = 14.sp
+                            text = "Plateforme d'anesthésie-réanimation • abdellahTron",
+                            color = SlateGray,
+                            fontSize = 11.sp
                         )
                     }
                 }
-
-                Text(
-                    "Sources : Recommandations SFAR, ASA, Difficult Airway Society (DAS), ERC, et consensus d'experts.",
-                    color = MedicalTeal,
-                    fontSize = 10.5.sp
-                )
             }
         },
         confirmButton = {
             Button(
-                onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = MedicalTeal, contentColor = MidnightNavy)
+                onClick = {
+                    try {
+                        val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                            data = Uri.parse("mailto:boutabd6@gmail.com")
+                            putExtra(Intent.EXTRA_SUBJECT, "Suggestion ou erreur — Anestheia Trone")
+                        }
+                        context.startActivity(emailIntent)
+                    } catch (e: Exception) {
+                        emailStatusMessage = "Aucune application de messagerie n'a pu être lancée sur cet appareil. Vous pouvez écrire manuellement à boutabd6@gmail.com."
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MedicalTeal, contentColor = MidnightNavy),
+                modifier = Modifier.testTag("send_email_button")
             ) {
-                Text("Fermer", fontWeight = FontWeight.Bold)
+                Text("Envoyer un e-mail", fontWeight = FontWeight.Bold)
             }
         },
-        containerColor = DeepNavyElevated
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                border = BorderStroke(1.dp, BorderSubtle),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = SoftWhite)
+            ) {
+                Text("Fermer")
+            }
+        },
+        containerColor = DeepNavy
     )
 }
 

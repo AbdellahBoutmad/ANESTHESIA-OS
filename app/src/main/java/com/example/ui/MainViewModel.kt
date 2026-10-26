@@ -12,12 +12,17 @@ import com.example.data.model.ChecklistItem
 import com.example.data.model.DrugModel
 import com.example.data.model.ProtocolModel
 import com.example.data.model.QuizQuestion
+import com.example.data.repository.OfflineMedicalRepository
 import com.example.data.repository.MedicalKnowledgeRepository
+import com.example.ui.theme.AppThemePalette
 import com.example.util.ClinicalCalculators
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -26,7 +31,8 @@ enum class MainTab {
 }
 
 enum class SubScreen {
-    NONE, CHECKLIST, BIOLOGY, CALCULATORS, QUIZ, CONSULTATION_WIZARD, PROTOCOL_DETAIL, DRUG_DETAIL
+    NONE, CHECKLIST, BIOLOGY, CALCULATORS, QUIZ, CONSULTATION_WIZARD, PROTOCOL_DETAIL, DRUG_DETAIL,
+    VENTILATION_SIMULATOR, ECG_CHALLENGE, ANESTHESIA_TIMELINE, MEDICAL_TRANSLATOR
 }
 
 data class ChatMessage(
@@ -41,6 +47,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val db = AppDatabase.getDatabase(application)
     private val patientDao = db.patientDao()
     private val checklistDao = db.checklistDao()
+    val offlineRepository = OfflineMedicalRepository(db)
 
     // Navigation state
     private val _currentTab = MutableStateFlow(MainTab.HOME)
@@ -60,12 +67,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val savedChecklists: StateFlow<List<ChecklistRecord>> = checklistDao.getAllChecklists()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Medical Knowledge
-    val drugsList: List<DrugModel> = MedicalKnowledgeRepository.drugs
-    val protocolsList: List<ProtocolModel> = MedicalKnowledgeRepository.protocols
-    val biologyList: List<BiologyTestModel> = MedicalKnowledgeRepository.biologyTests
-    val quizQuestions: List<QuizQuestion> = MedicalKnowledgeRepository.quizQuestions
-
     // Selection states
     private val _selectedDrug = MutableStateFlow<DrugModel?>(null)
     val selectedDrug: StateFlow<DrugModel?> = _selectedDrug.asStateFlow()
@@ -78,6 +79,54 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _protocolCategory = MutableStateFlow("TOUS")
     val protocolCategory: StateFlow<String> = _protocolCategory.asStateFlow()
+
+    // Reactive Room-backed offline clinical data
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val offlineDrugs: StateFlow<List<DrugModel>> = combine(_searchQuery, _drugCategory) { q: String, cat: String ->
+        Pair(q, cat)
+    }.flatMapLatest { pair ->
+        offlineRepository.getDrugs(pair.first, pair.second)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MedicalKnowledgeRepository.drugs)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val offlineProtocols: StateFlow<List<ProtocolModel>> = combine(_searchQuery, _protocolCategory) { q: String, cat: String ->
+        Pair(q, cat)
+    }.flatMapLatest { pair ->
+        offlineRepository.getProtocols(pair.first, pair.second)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MedicalKnowledgeRepository.protocols)
+
+    // Medical Knowledge (fallback references)
+    val drugsList: List<DrugModel> = MedicalKnowledgeRepository.drugs
+    val protocolsList: List<ProtocolModel> = MedicalKnowledgeRepository.protocols
+    val biologyList: List<BiologyTestModel> = MedicalKnowledgeRepository.biologyTests
+    val quizQuestions: List<QuizQuestion> = MedicalKnowledgeRepository.quizQuestions
+
+    // Theme Customization State
+    private val _themePalette = MutableStateFlow(AppThemePalette.TRON_CYAN)
+    val themePalette: StateFlow<AppThemePalette> = _themePalette.asStateFlow()
+
+    private val _isDarkTheme = MutableStateFlow(true)
+    val isDarkTheme: StateFlow<Boolean> = _isDarkTheme.asStateFlow()
+
+    fun setThemePalette(palette: AppThemePalette) {
+        _themePalette.value = palette
+    }
+
+    fun toggleDarkTheme(isDark: Boolean) {
+        _isDarkTheme.value = isDark
+    }
+
+    fun toggleDrugFavorite(drugId: String, currentFav: Boolean) {
+        viewModelScope.launch {
+            offlineRepository.toggleDrugFavorite(drugId, currentFav)
+        }
+    }
+
+    fun toggleProtocolFavorite(protocolId: String, currentFav: Boolean) {
+        viewModelScope.launch {
+            offlineRepository.toggleProtocolFavorite(protocolId, currentFav)
+        }
+    }
 
     // Real-time dose calculation weight
     private val _calculatorWeight = MutableStateFlow(70.0)
@@ -131,7 +180,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         listOf(
             ChatMessage(
                 isUser = false,
-                text = "Bonjour 👋 Je suis abdellahTron, votre assistant médical en anesthésie-réanimation au sein d'Anestheia Trone. Posez-moi une question clinique, demandez un protocole d'urgence, une posologie pondérale ou une interprétation biologique."
+                text = "Bonjour, je suis abdellahTron, votre assistant médical en anesthésie-réanimation au sein d'Anestheia Trone. Posez-moi une question clinique, demandez un protocole d'urgence, une posologie pondérale ou une interprétation biologique."
             )
         )
     )
@@ -154,6 +203,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val quizScore: StateFlow<Int> = _quizScore.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            offlineRepository.initializeIfNeeded()
+        }
+
         // Pre-populate with sample patient if DB is empty on first run
         viewModelScope.launch {
             if (patientDao.getAssessmentById(1L) == null) {
