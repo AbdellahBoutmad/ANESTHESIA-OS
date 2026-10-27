@@ -13,24 +13,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Calculate
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,22 +35,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.theme.AlertRed
-import com.example.ui.theme.BorderSubtle
-import com.example.ui.theme.DarkNightBlue
-import com.example.ui.theme.MedicalCyan
-import com.example.ui.theme.MedicalNavy
-import com.example.ui.theme.MedicalNavyElevated
-import com.example.ui.theme.MedicalNavySurface
-import com.example.ui.theme.PureWhite
-import com.example.ui.theme.SecondaryGrey
-import com.example.ui.theme.TurquoiseGreen
-import com.example.ui.theme.WarningOrange
 import com.example.util.ClinicalCalculators
 import kotlin.math.roundToInt
 
@@ -71,18 +54,19 @@ fun CalculatorsScreen() {
         "Pédiatrie"
     )
     var selectedTabIndex by remember { mutableStateOf(0) }
+    val colors = MaterialTheme.colorScheme
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkNightBlue)
+            .background(colors.background)
             .testTag("calculators_screen")
     ) {
-        // Tab Row
+        // Tab Row with theme colors
         ScrollableTabRow(
             selectedTabIndex = selectedTabIndex,
-            containerColor = MedicalNavy,
-            contentColor = MedicalCyan,
+            containerColor = colors.surface,
+            contentColor = colors.primary,
             edgePadding = 16.dp,
             divider = {}
         ) {
@@ -93,6 +77,7 @@ fun CalculatorsScreen() {
                     text = {
                         Text(
                             title,
+                            color = if (selectedTabIndex == index) colors.primary else colors.onSurfaceVariant,
                             fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal,
                             fontSize = 12.sp
                         )
@@ -101,22 +86,45 @@ fun CalculatorsScreen() {
             }
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 96.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+            contentAlignment = Alignment.TopCenter
         ) {
-            when (selectedTabIndex) {
-                0 -> item { BmiAndIdealWeightCalculator() }
-                1 -> item { CockcroftCreatinineCalculator() }
-                2 -> item { ApfelPonvCalculator() }
-                3 -> item { StopBangCalculator() }
-                4 -> item { AldretePacuCalculator() }
-                5 -> item { AllowableBloodLossCalculator() }
-                6 -> item { PediatricFormulasCalculator() }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 680.dp),
+                contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp)
+            ) {
+                item {
+                    when (selectedTabIndex) {
+                        0 -> BmiAndIdealWeightCalculator()
+                        1 -> CockcroftCreatinineCalculator()
+                        2 -> ApfelPonvCalculator()
+                        3 -> StopBangCalculator()
+                        4 -> AldretePacuCalculator()
+                        5 -> AllowableBloodLossCalculator()
+                        6 -> PediatricFormulasCalculator()
+                    }
+                }
             }
         }
     }
 }
+
+@Composable
+private fun dynamicOutlinedColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+)
 
 @Composable
 fun BmiAndIdealWeightCalculator() {
@@ -127,25 +135,26 @@ fun BmiAndIdealWeightCalculator() {
     val w = weightText.toDoubleOrNull() ?: 0.0
     val h = heightText.toDoubleOrNull() ?: 0.0
     val result = remember(w, h, isFemale) { ClinicalCalculators.calculateBmi(w, h, isFemale) }
+    val colors = MaterialTheme.colorScheme
 
     Column {
-        Text("CALCUL DE L'IMC & POIDS THÉORIQUES", color = MedicalCyan, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        Text("CALCUL DE L'IMC & POIDS THÉORIQUES", color = colors.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
         Spacer(modifier = Modifier.height(10.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedTextField(
                 value = weightText,
                 onValueChange = { weightText = it },
-                label = { Text("Poids réel (kg)") },
+                label = { Text("Poids réel (kg)", fontSize = 12.sp) },
                 modifier = Modifier.weight(1f),
-                colors = outlinedColors()
+                colors = dynamicOutlinedColors()
             )
             OutlinedTextField(
                 value = heightText,
                 onValueChange = { heightText = it },
-                label = { Text("Taille (cm)") },
+                label = { Text("Taille (cm)", fontSize = 12.sp) },
                 modifier = Modifier.weight(1f),
-                colors = outlinedColors()
+                colors = dynamicOutlinedColors()
             )
         }
 
@@ -168,11 +177,11 @@ fun BmiAndIdealWeightCalculator() {
         Spacer(modifier = Modifier.height(14.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MedicalNavy),
-            border = BorderStroke(1.dp, MedicalCyan)
+            colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant),
+            border = BorderStroke(1.dp, colors.primary)
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
-                Text("RÉSULTATS BIOMÉTRIQUES", color = MedicalCyan, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("RÉSULTATS BIOMÉTRIQUES", color = colors.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 ResultRow("IMC (Indice Masse Corporelle)", "${result.bmi} kg/m²", result.category)
@@ -196,25 +205,26 @@ fun CockcroftCreatinineCalculator() {
     val w = weightText.toDoubleOrNull() ?: 0.0
     val cr = crText.toDoubleOrNull() ?: 0.0
     val result = remember(age, w, cr, isFemale) { ClinicalCalculators.calculateCockcroft(age, w, cr, isFemale) }
+    val colors = MaterialTheme.colorScheme
 
     Column {
-        Text("ESTIMATION DE LA CLAIRANCE DE LA CRÉATININE", color = MedicalCyan, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        Text("ESTIMATION DE LA CLAIRANCE DE LA CRÉATININE", color = colors.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
         Spacer(modifier = Modifier.height(10.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedTextField(
                 value = ageText,
                 onValueChange = { ageText = it },
-                label = { Text("Âge (ans)") },
+                label = { Text("Âge (ans)", fontSize = 12.sp) },
                 modifier = Modifier.weight(1f),
-                colors = outlinedColors()
+                colors = dynamicOutlinedColors()
             )
             OutlinedTextField(
                 value = weightText,
                 onValueChange = { weightText = it },
-                label = { Text("Poids (kg)") },
+                label = { Text("Poids (kg)", fontSize = 12.sp) },
                 modifier = Modifier.weight(1f),
-                colors = outlinedColors()
+                colors = dynamicOutlinedColors()
             )
         }
 
@@ -222,9 +232,9 @@ fun CockcroftCreatinineCalculator() {
         OutlinedTextField(
             value = crText,
             onValueChange = { crText = it },
-            label = { Text("Créatininémie (µmol/L)") },
+            label = { Text("Créatininémie (µmol/L)", fontSize = 12.sp) },
             modifier = Modifier.fillMaxWidth(),
-            colors = outlinedColors()
+            colors = dynamicOutlinedColors()
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -246,16 +256,16 @@ fun CockcroftCreatinineCalculator() {
         Spacer(modifier = Modifier.height(14.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MedicalNavy),
-            border = BorderStroke(1.dp, TurquoiseGreen)
+            colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant),
+            border = BorderStroke(1.dp, colors.tertiary)
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
-                Text("CLAIRANCE (COCKCROFT & GAULT)", color = TurquoiseGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("CLAIRANCE (COCKCROFT & GAULT)", color = colors.tertiary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(6.dp))
-                Text("${result.clearanceMlMin} mL/min", color = PureWhite, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
-                Text(result.stage, color = MedicalCyan, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                Text("${result.clearanceMlMin} mL/min", color = colors.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+                Text(result.stage, color = colors.primary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(result.doseAdjustmentRecommendation, color = SecondaryGrey, fontSize = 12.sp)
+                Text(result.doseAdjustmentRecommendation, color = colors.onSurfaceVariant, fontSize = 12.sp)
             }
         }
     }
@@ -271,21 +281,22 @@ fun ApfelPonvCalculator() {
     val result = remember(isFemale, isNonSmoker, historyPonv, opioidsPlanned) {
         ClinicalCalculators.calculateApfel(isFemale, isNonSmoker, historyPonv, opioidsPlanned)
     }
+    val colors = MaterialTheme.colorScheme
 
     Column {
-        Text("SCORE D'APFEL — RISQUE DE NAUSÉES ET VOMISSEMENTS (NVPO)", color = MedicalCyan, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        Text("SCORE D'APFEL — RISQUE DE NAUSÉES ET VOMISSEMENTS (NVPO)", color = colors.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
         Spacer(modifier = Modifier.height(10.dp))
 
         CheckRow("Sexe féminin (+1)", isFemale) { isFemale = it }
         CheckRow("Patient non-fumeur (+1)", isNonSmoker) { isNonSmoker = it }
-        CheckRow("Antécédent de NVPO ou de mal des transports (+1)", historyPonv) { historyPonv = it }
+        CheckRow("Antécédent de NVPO ou mal de transports (+1)", historyPonv) { historyPonv = it }
         CheckRow("Utilisation prévue d'opioïdes postopératoires (+1)", opioidsPlanned) { opioidsPlanned = it }
 
         Spacer(modifier = Modifier.height(14.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MedicalNavy),
-            border = BorderStroke(1.dp, WarningOrange)
+            colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant),
+            border = BorderStroke(1.dp, colors.tertiary)
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(
@@ -293,14 +304,14 @@ fun ApfelPonvCalculator() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("SCORE TOTAL : ${result.score} / 4", color = WarningOrange, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                    Text("Risque estimé : ${result.riskPercentage}%", color = PureWhite, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("SCORE TOTAL : ${result.score} / 4", color = colors.tertiary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("Risque estimé : ${result.riskPercentage}%", color = colors.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(result.riskLevel, color = PureWhite, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Text(result.riskLevel, color = colors.onSurface, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(6.dp))
-                Text("Conduite préventive recommandée :", color = TurquoiseGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text(result.recommendation, color = SecondaryGrey, fontSize = 12.sp)
+                Text("Conduite préventive recommandée :", color = colors.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(result.recommendation, color = colors.onSurfaceVariant, fontSize = 12.sp)
             }
         }
     }
@@ -319,9 +330,10 @@ fun StopBangCalculator() {
 
     val criteria = listOf(snoring, tired, observedApnea, pressureHta, bmiOver35, ageOver50, neckOver40, genderMale)
     val result = remember(criteria) { ClinicalCalculators.calculateStopBang(criteria) }
+    val colors = MaterialTheme.colorScheme
 
     Column {
-        Text("SCORE STOP-BANG — DÉPISTAGE DU SYNDROME D'APNÉE DU SOMMEIL (SAOS)", color = MedicalCyan, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        Text("SCORE STOP-BANG — DÉPISTAGE DU SAOS", color = colors.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
         Spacer(modifier = Modifier.height(10.dp))
 
         CheckRow("S - Ronflement fort (Snoring)", snoring) { snoring = it }
@@ -336,15 +348,20 @@ fun StopBangCalculator() {
         Spacer(modifier = Modifier.height(14.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MedicalNavy),
-            border = BorderStroke(1.dp, if (result.score >= 5) AlertRed else MedicalCyan)
+            colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant),
+            border = BorderStroke(1.dp, if (result.score >= 5) colors.error else colors.primary)
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
-                Text("SCORE : ${result.score} / 8", color = if (result.score >= 5) AlertRed else MedicalCyan, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(
+                    "SCORE : ${result.score} / 8",
+                    color = if (result.score >= 5) colors.error else colors.primary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(result.riskLevel, color = PureWhite, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                Text(result.riskLevel, color = colors.onSurface, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
                 Spacer(modifier = Modifier.height(6.dp))
-                Text(result.recommendation, color = SecondaryGrey, fontSize = 12.sp)
+                Text(result.recommendation, color = colors.onSurfaceVariant, fontSize = 12.sp)
             }
         }
     }
@@ -361,12 +378,13 @@ fun AldretePacuCalculator() {
     val result = remember(motor, resp, circ, consci, spo2) {
         ClinicalCalculators.calculateAldrete(motor, resp, circ, consci, spo2)
     }
+    val colors = MaterialTheme.colorScheme
 
     Column {
-        Text("SCORE D'ALDRETE MODIFIÉ — CRITÈRES DE SORTIE DE SSPI", color = MedicalCyan, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        Text("SCORE D'ALDRETE MODIFIÉ — CRITÈRES DE SORTIE DE SSPI", color = colors.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
         Spacer(modifier = Modifier.height(10.dp))
 
-        ScoreSelector("1. Activité motrice volontaire :", motor, listOf("0 = Immobile", "1 = Bouge 2 membres", "2 = Bouge les 4 membres")) { motor = it }
+        ScoreSelector("1. Activité motrice volontaire :", motor, listOf("0 = Immobile", "1 = Bouge 2 membres", "2 = Bouge 4 membres")) { motor = it }
         ScoreSelector("2. Respiration & toux :", resp, listOf("0 = Apnée", "1 = Dyspnée modérée", "2 = Respiration ample & toux")) { resp = it }
         ScoreSelector("3. Pression artérielle :", circ, listOf("0 = Écart > 50%", "1 = Écart 20-50%", "2 = Écart < 20% réf.")) { circ = it }
         ScoreSelector("4. Conscience :", consci, listOf("0 = Non réveillable", "1 = Réveillable", "2 = Parfaitement lucide")) { consci = it }
@@ -375,8 +393,8 @@ fun AldretePacuCalculator() {
         Spacer(modifier = Modifier.height(14.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MedicalNavy),
-            border = BorderStroke(1.dp, if (result.canDischarge) TurquoiseGreen else AlertRed)
+            colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant),
+            border = BorderStroke(1.dp, if (result.canDischarge) colors.primary else colors.error)
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Row(
@@ -384,11 +402,21 @@ fun AldretePacuCalculator() {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("SCORE TOTAL : ${result.score} / 10", color = if (result.canDischarge) TurquoiseGreen else AlertRed, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp)
-                    Text(if (result.canDischarge) "AUTORISÉE" else "REFUSÉE", color = if (result.canDischarge) TurquoiseGreen else AlertRed, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text(
+                        "SCORE TOTAL : ${result.score} / 10",
+                        color = if (result.canDischarge) colors.primary else colors.error,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 16.sp
+                    )
+                    Text(
+                        if (result.canDischarge) "SORTIE AUTORISÉE" else "SURVEILLANCE CONTINUE",
+                        color = if (result.canDischarge) colors.primary else colors.error,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
                 }
                 Spacer(modifier = Modifier.height(6.dp))
-                Text(result.decision, color = PureWhite, fontSize = 12.sp)
+                Text(result.decision, color = colors.onSurface, fontSize = 12.sp)
             }
         }
     }
@@ -405,18 +433,19 @@ fun AllowableBloodLossCalculator() {
     val h1 = initHct.toDoubleOrNull() ?: 0.0
     val h2 = targetHct.toDoubleOrNull() ?: 0.0
     val abl = remember(w, h1, h2, isFemale) { ClinicalCalculators.calculateAllowableBloodLoss(w, h1, h2, isFemale) }
+    val colors = MaterialTheme.colorScheme
 
     Column {
-        Text("PERTES SANGUINES MAXIMALES ADMISSIBLES (ABL)", color = MedicalCyan, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-        Text("Formule de Gross : estimation du volume de saignement toléré avant transfusion.", color = SecondaryGrey, fontSize = 11.sp)
+        Text("PERTES SANGUINES MAXIMALES ADMISSIBLES (ABL)", color = colors.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        Text("Formule de Gross : estimation du volume de saignement toléré avant transfusion.", color = colors.onSurfaceVariant, fontSize = 11.sp)
         Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
             value = weightText,
             onValueChange = { weightText = it },
-            label = { Text("Poids (kg)") },
+            label = { Text("Poids (kg)", fontSize = 12.sp) },
             modifier = Modifier.fillMaxWidth(),
-            colors = outlinedColors()
+            colors = dynamicOutlinedColors()
         )
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -424,32 +453,32 @@ fun AllowableBloodLossCalculator() {
             OutlinedTextField(
                 value = initHct,
                 onValueChange = { initHct = it },
-                label = { Text("Hématocrite initial (%)") },
+                label = { Text("Hématocrite initial (%)", fontSize = 12.sp) },
                 modifier = Modifier.weight(1f),
-                colors = outlinedColors()
+                colors = dynamicOutlinedColors()
             )
             OutlinedTextField(
                 value = targetHct,
                 onValueChange = { targetHct = it },
-                label = { Text("Hématocrite seuil (%)") },
+                label = { Text("Hématocrite seuil (%)", fontSize = 12.sp) },
                 modifier = Modifier.weight(1f),
-                colors = outlinedColors()
+                colors = dynamicOutlinedColors()
             )
         }
 
         Spacer(modifier = Modifier.height(14.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MedicalNavy),
-            border = BorderStroke(1.dp, MedicalCyan)
+            colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant),
+            border = BorderStroke(1.dp, colors.primary)
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
-                Text("VOLUME SANGUIN TOLÉRÉ (ABL)", color = MedicalCyan, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("VOLUME SANGUIN TOLÉRÉ (ABL)", color = colors.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(6.dp))
-                Text("$abl mL", color = PureWhite, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
+                Text("$abl mL", color = colors.onSurface, fontWeight = FontWeight.ExtraBold, fontSize = 22.sp)
                 Text(
                     "Volume sanguin estimé total : ${(w * if (isFemale) 65 else 70).roundToInt()} mL. Au-delà de $abl mL de pertes, une transfusion de Concentrés de Globules Rouges (CGR) est à envisager.",
-                    color = SecondaryGrey,
+                    color = colors.onSurfaceVariant,
                     fontSize = 12.sp
                 )
             }
@@ -466,27 +495,28 @@ fun PediatricFormulasCalculator() {
     val uncuffedTube = (age / 4.0) + 4.0
     val cuffedTube = uncuffedTube - 0.5
     val tubeDepth = (age / 2.0) + 12.0
+    val colors = MaterialTheme.colorScheme
 
     Column {
-        Text("RÉFÉRENCES PÉDIATRIQUES D'ANESTHÉSIE", color = MedicalCyan, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        Text("RÉFÉRENCES PÉDIATRIQUES D'ANESTHÉSIE", color = colors.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
         Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
             value = ageYearsText,
             onValueChange = { ageYearsText = it },
-            label = { Text("Âge de l'enfant (années)") },
+            label = { Text("Âge de l'enfant (années)", fontSize = 12.sp) },
             modifier = Modifier.fillMaxWidth(),
-            colors = outlinedColors()
+            colors = dynamicOutlinedColors()
         )
 
         Spacer(modifier = Modifier.height(14.dp))
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MedicalNavy),
-            border = BorderStroke(1.dp, TurquoiseGreen)
+            colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant),
+            border = BorderStroke(1.dp, colors.tertiary)
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
-                Text("ESTIMATIONS POUR ENFANT DE $age ANS", color = TurquoiseGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("ESTIMATIONS POUR ENFANT DE $age ANS", color = colors.tertiary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 ResultRow("Poids estimé", "$estWeight kg", "Formule : 2 x (Âge + 4)")
@@ -501,6 +531,7 @@ fun PediatricFormulasCalculator() {
 
 @Composable
 fun ResultRow(label: String, value: String, hint: String) {
+    val colors = MaterialTheme.colorScheme
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -509,15 +540,16 @@ fun ResultRow(label: String, value: String, hint: String) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(label, color = PureWhite, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-            Text(hint, color = SecondaryGrey, fontSize = 10.sp)
+            Text(label, color = colors.onSurface, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            Text(hint, color = colors.onSurfaceVariant, fontSize = 10.sp)
         }
-        Text(value, color = MedicalCyan, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+        Text(value, color = colors.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
     }
 }
 
 @Composable
 fun CheckRow(text: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    val colors = MaterialTheme.colorScheme
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -528,9 +560,13 @@ fun CheckRow(text: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit)
         Checkbox(
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = CheckboxDefaults.colors(checkedColor = MedicalCyan)
+            colors = CheckboxDefaults.colors(
+                checkedColor = colors.primary,
+                checkmarkColor = colors.onPrimary,
+                uncheckedColor = colors.outline
+            )
         )
-        Text(text, color = PureWhite, fontSize = 12.sp)
+        Text(text, color = colors.onSurface, fontSize = 12.sp)
     }
 }
 
@@ -541,8 +577,9 @@ fun ScoreSelector(
     options: List<String>,
     onSelect: (Int) -> Unit
 ) {
+    val colors = MaterialTheme.colorScheme
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
-        Text(label, color = PureWhite, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        Text(label, color = colors.onSurface, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -561,8 +598,8 @@ fun ScoreSelector(
 
 @Composable
 fun filterChipColors() = FilterChipDefaults.filterChipColors(
-    selectedContainerColor = MedicalCyan,
-    selectedLabelColor = DarkNightBlue,
-    containerColor = MedicalNavySurface,
-    labelColor = PureWhite
+    selectedContainerColor = MaterialTheme.colorScheme.primary,
+    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+    labelColor = MaterialTheme.colorScheme.onSurface
 )

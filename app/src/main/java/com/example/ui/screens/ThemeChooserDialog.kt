@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -35,15 +38,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.AppThemePalette
 import com.example.ui.theme.ChampagneGold
-import com.example.ui.theme.DarkNightBlue
-import com.example.ui.theme.DeepNavy
-import com.example.ui.theme.DeepNavyElevated
-import com.example.ui.theme.DeepNavySurface
 import com.example.ui.theme.SlateGray
 import com.example.ui.theme.SoftWhite
 
@@ -57,59 +57,71 @@ fun ThemeChooserDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = DeepNavy,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(16.dp),
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Default.Palette,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Palette,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
-                        text = "Personnalisation du Thème",
-                        color = SoftWhite,
-                        fontSize = 16.sp,
+                        text = "Thèmes & Couleurs Globales",
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 15.5.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Anestheia Trone • Couleurs & Affichage",
-                        color = SlateGray,
-                        fontSize = 11.sp
+                        text = "Change le fond d'écran et toutes les couleurs",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 10.5.sp
                     )
                 }
             }
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 // Dark / Light Mode Switch
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = DeepNavyElevated,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                if (isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
+                                imageVector = if (isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
                                 contentDescription = null,
-                                tint = ChampagneGold,
-                                modifier = Modifier.size(20.dp)
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = if (isDarkTheme) "Mode Sombre (Tron)" else "Mode Clair",
-                                color = SoftWhite,
-                                fontSize = 12.sp,
+                                text = if (isDarkTheme) "Mode Sombre" else "Mode Clair",
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 12.5.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -117,75 +129,107 @@ fun ThemeChooserDialog(
                             checked = isDarkTheme,
                             onCheckedChange = onDarkThemeToggle,
                             colors = SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colorScheme.primary,
-                                checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                                uncheckedThumbColor = SlateGray,
-                                uncheckedTrackColor = DeepNavySurface
+                                checkedThumbColor = MaterialTheme.colorScheme.background,
+                                checkedTrackColor = MaterialTheme.colorScheme.primary,
+                                uncheckedThumbColor = MaterialTheme.colorScheme.primary,
+                                uncheckedTrackColor = MaterialTheme.colorScheme.surface
                             )
                         )
                     }
                 }
 
-                HorizontalDivider(color = SlateGray.copy(alpha = 0.2f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
 
                 Text(
-                    text = "Choisir la Palette de Couleurs :",
-                    color = SoftWhite,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+                    text = "CHOISIR LA PALETTE (FOND & ACTIONS) :",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
                 )
 
-                AppThemePalette.values().forEach { palette ->
-                    val isSelected = palette == currentPalette
+                // List of 9 palettes
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(290.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(AppThemePalette.entries.toTypedArray()) { palette ->
+                        val isSelected = currentPalette == palette
 
-                    Surface(
-                        shape = RoundedCornerShape(10.dp),
-                        color = if (isSelected) DeepNavyElevated else DeepNavySurface,
-                        border = BorderStroke(
-                            1.dp,
-                            if (isSelected) palette.primaryColor else SlateGray.copy(alpha = 0.2f)
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onPaletteSelect(palette) }
-                    ) {
-                        Row(
+                        Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Color Previews
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(22.dp)
-                                        .clip(CircleShape)
-                                        .background(palette.primaryColor)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .size(16.dp)
-                                        .clip(CircleShape)
-                                        .background(palette.accentColor)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = palette.title,
-                                color = if (isSelected) SoftWhite else SlateGray,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 12.sp,
-                                modifier = Modifier.weight(1f)
+                                .clickable { onPaletteSelect(palette) }
+                                .testTag("palette_${palette.name.lowercase()}"),
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant,
+                            border = BorderStroke(
+                                if (isSelected) 1.5.dp else 0.8.dp,
+                                if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                             )
-                            if (isSelected) {
-                                Icon(
-                                    Icons.Default.Check,
-                                    contentDescription = null,
-                                    tint = palette.primaryColor,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 9.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = palette.title,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        fontSize = 12.5.sp
+                                    )
+                                    Text(
+                                        text = palette.description,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = 10.sp
+                                    )
+                                }
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    // Swatch 1: Background Color
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(palette.backgroundColor)
+                                            .border(1.dp, Color.White.copy(alpha = 0.3f), CircleShape)
+                                    )
+                                    // Swatch 2: Surface Color
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(palette.surfaceColor)
+                                            .border(1.dp, Color.White.copy(alpha = 0.3f), CircleShape)
+                                    )
+                                    // Swatch 3: Primary Action Color
+                                    Box(
+                                        modifier = Modifier
+                                            .size(18.dp)
+                                            .clip(CircleShape)
+                                            .background(palette.primaryColor)
+                                            .border(1.dp, Color.White.copy(alpha = 0.4f), CircleShape)
+                                    )
+
+                                    if (isSelected) {
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = "Actif",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -195,9 +239,12 @@ fun ThemeChooserDialog(
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.background
+                )
             ) {
-                Text("Appliquer", color = DarkNightBlue, fontWeight = FontWeight.Bold)
+                Text("Appliquer & Fermer", fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
     )

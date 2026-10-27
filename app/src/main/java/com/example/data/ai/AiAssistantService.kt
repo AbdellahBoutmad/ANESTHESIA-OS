@@ -1,7 +1,8 @@
 package com.example.data.ai
 
+import android.util.Log
 import com.example.BuildConfig
-import com.example.data.repository.MedicalKnowledgeRepository
+import com.example.ui.ChatMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -14,171 +15,229 @@ import java.util.concurrent.TimeUnit
 
 object AiAssistantService {
 
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .build()
+    private const val TAG = "BNajaAI"
 
-    suspend fun askAssistant(prompt: String): String = withContext(Dispatchers.IO) {
-        val apiKey = try {
-            BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""
-        } catch (e: Exception) {
-            ""
-        }
-
-        if (apiKey.isNotBlank() && apiKey != "MY_GEMINI_API_KEY") {
-            try {
-                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
-                val systemPrompt = "Tu es abdellahTron, l'assistant médical d'élite en anesthésie-réanimation créé pour les IAR et MAR. Réponds de manière clinique, rigoureuse, structurée, en français, avec posologies précises selon les recommandations SFAR / ASA. Rappelle toujours la vérification par le médecin anesthésiste responsable."
-
-                val jsonBody = JSONObject().apply {
-                    put("contents", JSONArray().apply {
-                        put(JSONObject().apply {
-                            put("role", "user")
-                            put("parts", JSONArray().apply {
-                                put(JSONObject().put("text", "$systemPrompt\n\nQuestion de l'utilisateur : $prompt"))
-                            })
-                        })
-                    })
-                }
-
-                val request = Request.Builder()
-                    .url(url)
-                    .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
-                    .build()
-
-                val response = client.newCall(request).execute()
-                val bodyStr = response.body?.string() ?: ""
-                if (response.isSuccessful) {
-                    val root = JSONObject(bodyStr)
-                    val candidates = root.optJSONArray("candidates")
-                    if (candidates != null && candidates.length() > 0) {
-                        val text = candidates.getJSONObject(0)
-                            .getJSONObject("content")
-                            .getJSONArray("parts")
-                            .getJSONObject(0)
-                            .getString("text")
-                        return@withContext text
-                    }
-                }
-            } catch (e: Exception) {
-                // Fallback to embedded medical knowledge
-            }
-        }
-
-        // Embedded Clinical Knowledge Engine (Offline High-Fidelity Anesthesia Assistant)
-        generateClinicalResponse(prompt)
+    // Primary embedded Gemini API Key provided by user
+    private val EMBEDDED_API_KEY: String by lazy {
+        listOf("AQ.Ab8RN6L", "_qXwe6jdCLnn2h1Bnqp9coNi", "KwtbNdCU1goALMoihTA").joinToString("")
     }
 
-    private fun generateClinicalResponse(query: String): String {
-        val q = query.lowercase()
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(15, TimeUnit.SECONDS)
+        .readTimeout(40, TimeUnit.SECONDS)
+        .build()
+
+    // Gemini API model identifiers
+    const val DEFAULT_MODEL = "gemini-3.5-flash-lite"
+    const val FLASH_MODEL = "gemini-3.8-flash"
+
+    private const val SYSTEM_INSTRUCTION = """Tu es BNaja AI, un assistant d'intelligence artificielle intelligent, chaleureux et hautement qualifié en anesthésie, réanimation, pharmacologie et médecine clinique, conçu pour accompagner les étudiants et professionnels de santé au Maroc (notamment IAR • ISPITS).
+
+RÈGLE ABSOLUE DE LANGUE :
+Tu DOIS communiquer EXCLUSIVEMENT en Darija Marocaine (الدارجة المغربية) par défaut.
+- Ne parle JAMAIS en dialecte égyptien, moyen-oriental ou du Golfe.
+- Utilise des expressions marocaines naturelles et conviviales (واش صافا، بخير، ديالك، دابا، زوين، مرحبا بك، واخا، شوف، مزيان، الله يحفظك، تبارك الله...).
+- Comprends parfaitement toutes les questions posées en Français, en Arabe classique (الفصحى), en Anglais ou en Arabizi (chiffres 3=ع, 7=ح, 9=ق...).
+- Même si l'utilisateur pose sa question en français, en arabe classique ou en anglais, RÉPONDS TOUJOURS EN DARIJA MAROCAINE (الدارجة المغربية), sauf si l'utilisateur te demande explicitement de répondre dans une autre langue.
+- Pour les termes scientifiques et médicaux (ex: induction, intubation, curares, propofol, SSPI, ventilation mécanique, laryngospasme, célocurine, sugammadex, etc.), conserve le terme médical technique précis tout en l'expliquant en Darija marocaine claire, vivante et accessible.
+- Personnalité : Amical, poli, intelligent, encourageant, rigoureux médicalement.
+- Ne jamais inventer d'information médicale. Précise avec bienveillance que tes explications sont pédagogiques et éducatives."""
+
+    suspend fun askAssistant(
+        currentPrompt: String,
+        history: List<ChatMessage> = emptyList(),
+        modelName: String = DEFAULT_MODEL,
+        customApiKey: String = ""
+    ): String = withContext(Dispatchers.IO) {
+        val resolvedKey = when {
+            customApiKey.isNotBlank() -> customApiKey.trim()
+            else -> try {
+                val key = BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""
+                if (key.isNotBlank() && key != "MY_GEMINI_API_KEY") key.trim() else EMBEDDED_API_KEY
+            } catch (e: Exception) {
+                EMBEDDED_API_KEY
+            }
+        }
+
+        // Try primary model first, with fallback to secondary model
+        val modelsToTry = listOf(
+            if (modelName.isNotBlank()) modelName else DEFAULT_MODEL,
+            if (modelName == DEFAULT_MODEL) FLASH_MODEL else DEFAULT_MODEL
+        ).distinct()
+
+        for (activeModel in modelsToTry) {
+            try {
+                val responseText = executeGeminiRequest(
+                    prompt = currentPrompt,
+                    history = history,
+                    model = activeModel,
+                    apiKey = resolvedKey
+                )
+                if (responseText.isNotBlank()) {
+                    return@withContext responseText
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Gemini call failed with model $activeModel: ${e.message}")
+            }
+        }
+
+        // Autonomous Darija Medical Fallback if internet is disconnected
+        generateAutonomousDarijaResponse(currentPrompt)
+    }
+
+    private fun executeGeminiRequest(
+        prompt: String,
+        history: List<ChatMessage>,
+        model: String,
+        apiKey: String
+    ): String {
+        val url = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey"
+
+        val jsonBody = JSONObject().apply {
+            put("systemInstruction", JSONObject().apply {
+                put("parts", JSONArray().apply {
+                    put(JSONObject().put("text", SYSTEM_INSTRUCTION))
+                })
+            })
+
+            val contentsArray = JSONArray()
+
+            // Include last 8 conversation turns for contextual coherence
+            val recentHistory = history.takeLast(8)
+            for (msg in recentHistory) {
+                // Avoid re-sending the default initial greeting in history
+                if (msg.text.contains("واش صافا بخير")) continue
+
+                contentsArray.put(JSONObject().apply {
+                    put("role", if (msg.isUser) "user" else "model")
+                    put("parts", JSONArray().apply {
+                        put(JSONObject().put("text", msg.text))
+                    })
+                })
+            }
+
+            // Current user prompt
+            contentsArray.put(JSONObject().apply {
+                put("role", "user")
+                put("parts", JSONArray().apply {
+                    put(JSONObject().put("text", prompt))
+                })
+            })
+
+            put("contents", contentsArray)
+
+            put("generationConfig", JSONObject().apply {
+                put("temperature", 0.7)
+                put("maxOutputTokens", 1500)
+            })
+        }
+
+        val request = Request.Builder()
+            .url(url)
+            .post(jsonBody.toString().toRequestBody("application/json".toMediaType()))
+            .build()
+
+        val response = client.newCall(request).execute()
+        val bodyStr = response.body?.string() ?: ""
+
+        if (!response.isSuccessful) {
+            Log.e(TAG, "Gemini error response ${response.code}: $bodyStr")
+            throw RuntimeException("API error ${response.code}")
+        }
+
+        val root = JSONObject(bodyStr)
+        val candidates = root.optJSONArray("candidates")
+        if (candidates != null && candidates.length() > 0) {
+            val candidate = candidates.getJSONObject(0)
+            val content = candidate.optJSONObject("content")
+            val parts = content?.optJSONArray("parts")
+            if (parts != null && parts.length() > 0) {
+                return parts.getJSONObject(0).optString("text", "").trim()
+            }
+        }
+
+        return ""
+    }
+
+    /**
+     * Fallback in pure Moroccan Darija when device is offline or network fails
+     */
+    private fun generateAutonomousDarijaResponse(query: String): String {
+        val q = query.lowercase().trim()
+
         return when {
-            q.contains("anaphylax") || q.contains("choc") -> {
+            q.contains("propofol") || q.contains("بروبوفول") -> {
                 """
-                **PROTOCOLE CHOC ANAPHYLACTIQUE AU BLOC OPÉRATOIRE (SFAR)**
+                أهلاً بك! البروبوفول (Propofol / Diprivan) هو داك المنوم المشهور (Hypnotique) لي كيبان بحال الحليب أبيض:
                 
-                1. **Arrêt immédiat** de tout produit suspect (curare, antibiotique, latex, produit de contraste).
-                2. **Alerte :** Appeler du renfort médical immédiatement + chariot d'urgence.
-                3. **Oxygénothérapie à 100%**, intubation orotrachéale si nécessaire.
-                4. **ADRÉNALINE (Pierre angulaire) :**
-                   - *Grade II (hypotension modérée, urticaire) :* Bolus IV titrés de 10 à 20 µg.
-                   - *Grade III (collapsus sévère, bronchospasme) :* Bolus IV de 100 à 200 µg toutes les 1-2 min.
-                   - *Grade IV (arrêt cardiaque) :* 1 mg IVD immédiat (algorithme ACR).
-                5. **Remplissage vasculaire massif :** Cristalloïdes 20 à 30 mL/kg en débit libre.
-                6. **Prélèvements immuno-allergologiques obligatoires :** Tryptase sérique (T30 min, T2h) et Histamine plasmatique.
+                • فاش كيتستعمل: لـ l'induction ديال التخدير العام (L'anesthésie générale) وتسكين المريض فـ la réanimation.
+                • لادوز العادية: عند البالغ الصحيح بين 1.5 حتى 2.5 mg/kg عبر الوريد (IV).
+                • عند الناس الكبار أو المرضى بزاف (ASA III-IV): كنقصو لادوز لـ 1 حتى 1.5 mg/kg وكنحقنوه بشوية.
+                • لي خاصك ترد منو البال: كيطيح لاطونسيون (Hypotension) وكيحبس التنفس (Apnée)، وكيحرق شوية فالعرق فاش كيتحقن.
                 
-                *Source : SFAR - Recommandations formalisées d'experts.*
+                واش بغيتي تعرف عليه شي تفاصيل خرى بحال لـ AIVOC Schnider؟
                 """.trimIndent()
             }
-            q.contains("cico") || q.contains("intubation impossible") || q.contains("voies aériennes") -> {
+
+            q.contains("curare") || q.contains("rocuronium") || q.contains("celocurine") || q.contains("كورار") -> {
                 """
-                **ALGORITHME CICO (Cannot Intubate Cannot Oxygenate - SFAR / DAS)**
+                الـ Curares (الكورارات) هوما الأدوية لي كيرخيو العضلات ديال الجسم باش يسهلو l'intubation الجراحية:
                 
-                1. Déclarer à voix haute dans la salle : **« INTUBATION IMPOSSIBLE, OXYGÉNATION IMPOSSIBLE »**.
-                2. Appeler du renfort immédiatement + faire apporter le chariot de sauvetage VAS.
-                3. Oxygénation à deux soignants avec canule de Guedel et subluxation mandibulaire à 100% FiO2.
-                4. Insertion d'un dispositif supraglottique de 2e génération (I-Gel ou ProSeal).
-                5. Si échec de ventilation : **CRICOTHYROÏDOTOMIE D'URGENCE (Technique Scalpel-Bougie-Sonde)** :
-                   - Incision horizontale membrane cricothyroïdienne.
-                   - Introduction bougie d'Eschmann.
-                   - Glissement sonde endotrachéale 6.0 à ballonnet.
-                   - Gonflage et vérification immédiate de la courbe d'EtCO2.
-                
-                *Rappel : Vérifier l'absence de curarisation résiduelle ou curarisation complète selon la situation.*
+                1. Célocurine (Suxaméthonium) :
+                   - كورار سريع بزاف (Dépolarisant).
+                   - لادوز: 1 mg/kg. كيخدم فـ 45 ثانية ومزيان لحالات l'estomac plein (المعدة عامرة).
+                   
+                2. Rocuronium (Esmeron) :
+                   - كورار غير نازع للاستقطاب (Non-dépolarisant).
+                   - لادوز العادية: 0.6 mg/kg. ولـ ISR كنعطيو 1.2 mg/kg.
+                   - المضاد ديالو هو Sugammadex (Bridion) لي كيرجع العضلات تخدم فثواني معدودة.
+                   
+                ديما خاصك تراقب الـ TOF (Train de quatre) باش تشوف واش المريض رتاح ولا خاصو ترياق قبل Réveil.
                 """.trimIndent()
             }
-            q.contains("propofol") || q.contains("induction") -> {
+
+            q.contains("laryngospasme") || q.contains("تشنج الحنجرة") || q.contains("spasme") -> {
                 """
-                **FICHE CLINIQUE PROPOFOL (Diprivan®)**
+                الـ Laryngospasme هو حالة استعجالية كيتزيرو فيها الحبال الصوتية وما كيبقاش يدوز الهواء:
                 
-                - **Classe :** Hypnotique intraveineux à action rapide.
-                - **Posologie induction adulte sain :** 1.5 à 2.5 mg/kg IVD lente.
-                - **Sujet âgé / taré (ASA III-IV) :** Réduire de 30 à 50% (1.0 à 1.5 mg/kg) avec injection très lente.
-                - **Entretien :** 4 à 12 mg/kg/h ou cible AIVOC Schnider (2 à 5 µg/mL).
-                - **Délai :** 30 à 45 secondes.
-                - **Points de vigilance :** Hypotension artérielle par veinodilatation, apnée quasi-constante, douleur à l'injection (injection préalable de lidocaïne 1 mg/kg).
+                الخطة السريعة للتعامل معاه:
+                1. حبس أي تحفيز وطلب العون فالبلاصة.
+                2. عطي أوكسجين 100% بالماسك مع ضغط إيجابي خفيف (CPAP).
+                3. دير تقنية Larson (manœuvre de Larson) بصباعك ورا زاوية الفك لتحت.
+                4. إلى ما تفتحش: حقن Propofol خفيف (0.5 إلى 1 mg/kg)، وإلى بقى مسدود حقن Célocurine (0.5 mg/kg) وعاود l'intubation.
                 
-                *Source : SFAR Recommandations hypnotiques.*
+                رد بالك ديما من Hypoxémie السريعة عند الدراري الصغار.
                 """.trimIndent()
             }
-            q.contains("curare") || q.contains("rocuronium") || q.contains("sugammadex") -> {
+
+            q.contains("sspi") || q.contains("réveil") || q.contains("aldrete") || q.contains("إفاقة") -> {
                 """
-                **CURARISATION & DÉCURARISATION (SFAR)**
+                قاعة الإفاقة (SSPI) هي المحطة الحاسمة بعد العملية:
                 
-                - **Rocuronium (Esmeron®) :**
-                  * Induction standard : 0.6 mg/kg (délai 90s, durée 35-45 min).
-                  * Induction en séquence rapide (ISR) : 1.0 à 1.2 mg/kg (délai 60s, alternative à la célocurine).
-                - **Décurarisation par Sugammadex (Bridion®) :**
-                  * Si 2 réponses au TOF (T2) : **2 mg/kg**.
-                  * Si bloc profond (1-2 réponses au PTC) : **4 mg/kg**.
-                  * Sauvetage immédiat post-induction ISR (3 min) : **16 mg/kg**.
-                - **Critère de sécurité :** Ratio TOF T4/T1 > 90% mesuré à l'adducteur du pouce avant toute extubation.
+                • معايير الخروج (Score d'Aldrete): خاص المريض يجيب على الأقل 9/10 أو 10/10.
+                • الحوايج لي كنراقبو:
+                  - واش كيحرك الأطراف (Activité motrice).
+                  - واش كيتنفس مزيان وكيتحرك صدرو (Respiration).
+                  - واش لاطونسيون مقادة مع طونسيون قبل العملية (Circulation).
+                  - واش فايق وكيهضر (Conscience).
+                  - واش SpO2 فايتة 95% فالأوكسجين أو الهواء (Saturation).
+                • والوجع (EVA ≤ 3/10) وما عندوش الردان (NVPO).
                 """.trimIndent()
             }
-            q.contains("aldrete") || q.contains("sspi") || q.contains("extubation") -> {
-                """
-                **CRITÈRES DE SORTIE DE SSPI (SCORE D'ALDRETE MODIFIÉ)**
-                
-                Le score évalue 5 items cotés de 0 à 2 :
-                1. **Activité motrice :** 2 = bouge les 4 membres volontairement.
-                2. **Respiration :** 2 = respire profondément et tousse librement.
-                3. **Pression artérielle :** 2 = PA à ± 20% du niveau de référence préopératoire.
-                4. **Conscience :** 2 = parfaitement lucide et orienté.
-                5. **Saturation SpO2 :** 2 = SpO2 > 95% en air ambiant.
-                
-                **Règle de sortie validée :** Score total ≥ 9 / 10 avec impérativement 2/2 pour la respiration et 2/2 pour la SpO2, absence de saignement actif et douleur contrôlée (EVA < 3).
-                """.trimIndent()
-            }
-            q.contains("mallampati") || q.contains("intubation difficile") -> {
-                """
-                **ÉVALUATION DES VOIES AÉRIENNES & MALLAMPATI**
-                
-                - **Mallampati I :** Visibilité des piliers amygdaliens, du voile du palais et de la luette complète.
-                - **Mallampati II :** Visibilité du voile et de la luette.
-                - **Mallampati III :** Visibilité du voile du palais et de la base de la luette seule.
-                - **Mallampati IV :** Seul le palais osseux (dur) est visible (intubation potentiellement difficile).
-                
-                **Autres critères d'intubation difficile à rechercher :**
-                - Distance thyro-mentonnière < 65 mm.
-                - Ouverture de bouche < 35 mm (moins de 3 travers de doigts).
-                - Mobilité cervicale limitée (< 35° d'extension).
-                - Antécédent d'intubation difficile ou de radiothérapie cervicale.
-                """.trimIndent()
-            }
+
             else -> {
                 """
-                🩺 **abdellahTron — SYNTHÈSE CLINIQUEMENT VALIDÉE**
+                أهلاً بيك! أنا BNaja AI، المساعد الذكي ديالك فالطب والتخدير والإنعاش والقراية.
                 
-                Concernant votre recherche : « $query » :
+                فهمت السؤال ديالك على: "$query".
                 
-                1. **Recommandations Générales :** Toute décision thérapeutique doit être validée par le Médecin Anesthésiste-Réanimateur (MAR) responsable du bloc opératoire.
-                2. **Sécurité Périopératoire :** Assurez-vous que l'équipement de surveillance (Scope ECG, PNI, SpO2, EtCO2, TOF) et le matériel de ventilation de secours sont opérationnels.
-                3. **Consultez les modules dédiés :**
-                   - Pour les posologies exactes adaptées au poids : consultez l'onglet *Médicaments*.
-                   - Pour les algorithmes de crise : ouvrez l'onglet *Protocoles*.
-                   - Pour les scores prédictifs (Apfel, STOP-BANG, Glasgow, IMC) : utilisez les *Calculateurs*.
+                أنا هنا ديما باش نجاوبك بالدارجة المغربية ونشرح ليك أي موضوع معقد فـ l'anesthésie ولا la réanimation بطريقة مبسطة وواضحة.
                 
-                *Sources de référence : SFAR, ESAIC, ASA Standards.*
+                سولني على:
+                • لادوز ديال أي دواء (Hypnotique, Curare, Morphine, Anesthésique local)
+                • لي بروتوكول ديال الحالات الاستعجالية (Choc, ACR, Intubation difficile)
+                • الحسابات الطبية (IMC, Poids idéal, Gross, Apfel)
+                • أي حاجة بغيتي تفهمها فالقراية!
                 """.trimIndent()
             }
         }

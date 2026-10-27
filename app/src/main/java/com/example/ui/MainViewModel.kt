@@ -32,7 +32,7 @@ enum class MainTab {
 
 enum class SubScreen {
     NONE, CHECKLIST, BIOLOGY, CALCULATORS, QUIZ, CONSULTATION_WIZARD, PROTOCOL_DETAIL, DRUG_DETAIL,
-    VENTILATION_SIMULATOR, ECG_CHALLENGE, ANESTHESIA_TIMELINE, MEDICAL_TRANSLATOR
+    VENTILATION_SIMULATOR, ECG_CHALLENGE, ANESTHESIA_TIMELINE, MEDICAL_TRANSLATOR, POST_OP_COMPLICATIONS
 }
 
 data class ChatMessage(
@@ -175,12 +175,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val wizPonvScore = MutableStateFlow(2)
     val wizSummaryNotes = MutableStateFlow("Patient éligible à l'anesthésie générale avec intubation orotrachéale. Surveillance tensionnelle renforcée.")
 
-    // AI Chat State
+    // AI Chat State (BNaja AI)
     private val _chatMessages = MutableStateFlow(
         listOf(
             ChatMessage(
                 isUser = false,
-                text = "Bonjour, je suis abdellahTron, votre assistant médical en anesthésie-réanimation au sein d'Anestheia Trone. Posez-moi une question clinique, demandez un protocole d'urgence, une posologie pondérale ou une interprétation biologique."
+                text = "واش صافا بخير \n أنا المساعد الذكي ديالك \n\nأنا هنا باش نعاونك فالقراية، نجاوبك على الأسئلة ديالك،  فمجال التخدير والإنعاش \n\nسولني على أي حاجة بغيتي، ومرحبا بيك فـ أي وقت!"
             )
         )
     )
@@ -188,6 +188,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _isAiGenerating = MutableStateFlow(false)
     val isAiGenerating: StateFlow<Boolean> = _isAiGenerating.asStateFlow()
+
+    private val _selectedAiModel = MutableStateFlow("gemini-3.5-flash-lite")
+    val selectedAiModel: StateFlow<String> = _selectedAiModel.asStateFlow()
+
+    private val _customApiKey = MutableStateFlow("")
+    val customApiKey: StateFlow<String> = _customApiKey.asStateFlow()
 
     // Quiz State
     private val _currentQuizIndex = MutableStateFlow(0)
@@ -438,14 +444,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // AI Chat
+    fun setAiModel(model: String) {
+        _selectedAiModel.value = model
+    }
+
+    fun setCustomApiKey(key: String) {
+        _customApiKey.value = key.trim()
+    }
+
+    fun clearChatMessages() {
+        _chatMessages.value = listOf(
+            ChatMessage(
+                isUser = false,
+                text = "واش صافا بخير \n أنا المساعد الذكي ديالك \n\nأنا هنا باش نعاونك فالقراية، نجاوبك على الأسئلة ديالك،  فمجال التخدير والإنعاش \n\nسولني على أي حاجة بغيتي، ومرحبا بيك فـ أي وقت!"
+            )
+        )
+    }
+
     fun sendAiPrompt(prompt: String) {
         if (prompt.isBlank() || _isAiGenerating.value) return
-        val userMsg = ChatMessage(isUser = true, text = prompt)
-        _chatMessages.value = _chatMessages.value + userMsg
+        val userMsg = ChatMessage(isUser = true, text = prompt.trim())
+        val currentHistory = _chatMessages.value
+        val updatedHistory = currentHistory + userMsg
+        _chatMessages.value = updatedHistory
         _isAiGenerating.value = true
 
         viewModelScope.launch {
-            val responseText = AiAssistantService.askAssistant(prompt)
+            val responseText = AiAssistantService.askAssistant(
+                currentPrompt = prompt.trim(),
+                history = updatedHistory,
+                modelName = _selectedAiModel.value,
+                customApiKey = _customApiKey.value
+            )
             val aiMsg = ChatMessage(isUser = false, text = responseText)
             _chatMessages.value = _chatMessages.value + aiMsg
             _isAiGenerating.value = false

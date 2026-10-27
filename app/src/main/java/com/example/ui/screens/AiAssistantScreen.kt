@@ -1,9 +1,22 @@
 package com.example.ui.screens
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +26,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,20 +37,29 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.CleaningServices
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,39 +69,39 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.ChatMessage
 import com.example.ui.MainViewModel
-import com.example.ui.theme.BorderSubtle
-import com.example.ui.theme.ChampagneGold
-import com.example.ui.theme.DarkNightBlue
-import com.example.ui.theme.ElectricCyan
-import com.example.ui.theme.MedicalCyan
-import com.example.ui.theme.MedicalNavy
-import com.example.ui.theme.MedicalNavyElevated
-import com.example.ui.theme.MedicalNavySurface
-import com.example.ui.theme.PureWhite
-import com.example.ui.theme.SecondaryGrey
-import com.example.ui.theme.TurquoiseGreen
-import com.example.ui.theme.WarningOrange
 
 @Composable
 fun AiAssistantScreen(viewModel: MainViewModel) {
+    val context = LocalContext.current
     val messages by viewModel.chatMessages.collectAsState()
     val isGenerating by viewModel.isAiGenerating.collectAsState()
+    val selectedModel by viewModel.selectedAiModel.collectAsState()
+    val customApiKey by viewModel.customApiKey.collectAsState()
+
     var inputText by remember { mutableStateOf("") }
+    var showConfigDialog by remember { mutableStateOf(false) }
+    var tempApiKey by remember { mutableStateOf(customApiKey) }
+
     val listState = rememberLazyListState()
 
     val quickPrompts = listOf(
-        "Parler à abdellahTron : Calcul dose Propofol",
-        "Protocole Anaphylaxie Grade III",
-        "Algorithme CICO (Intubation impossible)",
-        "Critères de sortie de SSPI (Aldrete)",
-        "Contre-indications Célocurine",
-        "Doses Sugammadex après ISR"
+        "واش صافا، شرح ليا البروبوفول بدارجة",
+        "شنو هما مضاعفات قاعة الإفاقة (SSPI)؟",
+        "شرح ليا les curares وفوقاش كنستعملو Célocurine",
+        "كفاش كنديرو l'intubation difficile؟",
+        "Calculer la dose de Propofol pour 70 kg",
+        "شنو هو تدبير تشنج الحنجرة Laryngospasme؟"
     )
 
     LaunchedEffect(messages.size) {
@@ -87,95 +110,119 @@ fun AiAssistantScreen(viewModel: MainViewModel) {
         }
     }
 
+    val currentPalette = MaterialTheme.colorScheme
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkNightBlue)
+            .background(currentPalette.background)
+            .imePadding()
             .testTag("ai_assistant_screen")
     ) {
-        // abdellahTron Visual Identity Header
+        // BNaja AI Header with Status Indicator
         Surface(
-            color = MedicalNavy,
+            color = currentPalette.surface,
             modifier = Modifier.fillMaxWidth(),
-            border = BorderStroke(1.dp, BorderSubtle)
+            border = BorderStroke(1.dp, currentPalette.outline.copy(alpha = 0.3f))
         ) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(ElectricCyan.copy(alpha = 0.15f))
-                                .border(BorderStroke(1.dp, ElectricCyan.copy(alpha = 0.5f)), RoundedCornerShape(10.dp)),
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(currentPalette.primary.copy(alpha = 0.18f))
+                                .border(
+                                    BorderStroke(1.dp, currentPalette.primary.copy(alpha = 0.7f)),
+                                    RoundedCornerShape(12.dp)
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = "abdellahTron",
-                                tint = ElectricCyan,
-                                modifier = Modifier.size(22.dp)
+                                contentDescription = "BNaja AI",
+                                tint = currentPalette.primary,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    "abdellahTron",
-                                    color = ElectricCyan,
+                                    "BNaja AI",
+                                    color = currentPalette.primary,
                                     fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 16.sp,
+                                    fontSize = 17.sp,
                                     letterSpacing = 0.5.sp
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Surface(
                                     shape = RoundedCornerShape(4.dp),
-                                    color = ChampagneGold.copy(alpha = 0.18f),
-                                    border = BorderStroke(0.5.dp, ChampagneGold.copy(alpha = 0.6f))
+                                    color = currentPalette.tertiary.copy(alpha = 0.2f),
+                                    border = BorderStroke(0.5.dp, currentPalette.tertiary.copy(alpha = 0.7f))
                                 ) {
                                     Text(
-                                        "INTELLIGENCE CLINIQUE",
-                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp),
-                                        color = ChampagneGold,
-                                        fontSize = 8.5.sp,
+                                        "الدارجة المغربية",
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                        color = currentPalette.tertiary,
+                                        fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
                             }
                             Text(
-                                "Assistant IA médical intégré à Anestheia Trone",
-                                color = SecondaryGrey,
+                                "المساعد الذكي للتخدير والإنعاش والقراية • Gemini Live",
+                                color = currentPalette.onSurfaceVariant,
                                 fontSize = 11.sp
                             )
                         }
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(ElectricCyan)
-                    )
-                }
+                    // Top Action buttons: Clear Chat & Model/API Configuration
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                viewModel.clearChatMessages()
+                                Toast.makeText(context, "تمت إعادة تعيين المحادثة", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.CleaningServices,
+                                contentDescription = "مسح المحادثة",
+                                tint = currentPalette.onSurfaceVariant,
+                                modifier = Modifier.size(19.dp)
+                            )
+                        }
 
-                Spacer(modifier = Modifier.height(6.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Warning, null, tint = WarningOrange, modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        "Aide à la décision clinique. Ne remplace pas le jugement du médecin anesthésiste.",
-                        color = SecondaryGrey,
-                        fontSize = 10.sp
-                    )
+                        IconButton(
+                            onClick = {
+                                tempApiKey = customApiKey
+                                showConfigDialog = true
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Tune,
+                                contentDescription = "إعدادات الذكاء الاصطناعي",
+                                tint = currentPalette.primary,
+                                modifier = Modifier.size(19.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
 
-        // Quick Suggestion Chips
+        // Quick Moroccan Darija Suggestion Chips
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -186,61 +233,60 @@ fun AiAssistantScreen(viewModel: MainViewModel) {
                 FilterChip(
                     selected = false,
                     onClick = {
-                        val cleanPrompt = prompt.removePrefix("Parler à abdellahTron : ")
-                        viewModel.sendAiPrompt(cleanPrompt)
+                        viewModel.sendAiPrompt(prompt)
                     },
-                    label = { Text(prompt, fontSize = 11.sp) },
+                    label = { Text(prompt, fontSize = 11.5.sp) },
                     colors = FilterChipDefaults.filterChipColors(
-                        containerColor = MedicalNavySurface,
-                        labelColor = PureWhite
+                        containerColor = currentPalette.surfaceVariant,
+                        labelColor = currentPalette.onSurface
                     ),
-                    border = BorderStroke(1.dp, BorderSubtle)
+                    border = BorderStroke(1.dp, currentPalette.outline.copy(alpha = 0.35f))
                 )
             }
         }
 
-        // Chat Messages List
+        // Chat Messages List with RTL Support
         LazyColumn(
             state = listState,
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 16.dp),
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             items(messages) { msg ->
-                ChatBubble(message = msg)
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn(animationSpec = tween(250)) + slideInVertically(
+                        animationSpec = tween(250),
+                        initialOffsetY = { 30 }
+                    )
+                ) {
+                    BNajaChatBubble(
+                        message = msg,
+                        onCopy = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            clipboard.setPrimaryClip(ClipData.newPlainText("BNaja AI", msg.text))
+                            Toast.makeText(context, "تم النسخ بنجاح", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
                 Spacer(modifier = Modifier.height(10.dp))
             }
 
+            // Typing animation when AI is generating
             if (isGenerating) {
                 item {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    ) {
-                        CircularProgressIndicator(
-                            color = MedicalCyan,
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            "abdellahTron consulte la base médicale...",
-                            color = MedicalCyan,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    BNajaTypingIndicator()
                 }
             }
         }
 
         // Message Input Field
         Surface(
-            color = MedicalNavy,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 80.dp) // Leave space for Bottom Navigation
+            color = currentPalette.surface,
+            modifier = Modifier.fillMaxWidth(),
+            border = BorderStroke(1.dp, currentPalette.outline.copy(alpha = 0.25f))
         ) {
             Row(
                 modifier = Modifier
@@ -252,14 +298,26 @@ fun AiAssistantScreen(viewModel: MainViewModel) {
                     value = inputText,
                     onValueChange = { inputText = it },
                     placeholder = {
-                        Text("Parler à abdellahTron (posologie, protocole, cas)...", color = SecondaryGrey, fontSize = 12.sp)
+                        Text(
+                            "سول BNaja AI على أي حاجة بغيتي بالدارجة...",
+                            color = currentPalette.onSurfaceVariant,
+                            fontSize = 12.5.sp,
+                            textAlign = TextAlign.Start
+                        )
                     },
                     modifier = Modifier
                         .weight(1f)
                         .testTag("ai_input_field"),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = outlinedColors(),
-                    maxLines = 3
+                    shape = RoundedCornerShape(22.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = currentPalette.onSurface,
+                        unfocusedTextColor = currentPalette.onSurface,
+                        focusedContainerColor = currentPalette.surfaceVariant.copy(alpha = 0.6f),
+                        unfocusedContainerColor = currentPalette.surfaceVariant.copy(alpha = 0.4f),
+                        focusedBorderColor = currentPalette.primary,
+                        unfocusedBorderColor = currentPalette.outline.copy(alpha = 0.4f)
+                    ),
+                    maxLines = 4
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -272,26 +330,147 @@ fun AiAssistantScreen(viewModel: MainViewModel) {
                         }
                     },
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(46.dp)
                         .clip(CircleShape)
-                        .background(if (inputText.isNotBlank() && !isGenerating) MedicalCyan else MedicalNavySurface)
+                        .background(
+                            if (inputText.isNotBlank() && !isGenerating) currentPalette.primary
+                            else currentPalette.surfaceVariant
+                        )
                         .testTag("ai_send_button")
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Send,
-                        contentDescription = "Envoyer à abdellahTron",
-                        tint = if (inputText.isNotBlank() && !isGenerating) DarkNightBlue else SecondaryGrey,
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = "إرسال إلى BNaja AI",
+                        tint = if (inputText.isNotBlank() && !isGenerating) currentPalette.onPrimary
+                               else currentPalette.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
                 }
             }
         }
     }
+
+    // Model & API Key Configuration Dialog
+    if (showConfigDialog) {
+        val models = listOf(
+            Triple("gemini-3.5-flash-lite", "Flash Lite 3.5 (موصى به)", "استجابة فائقة السرعة بالدارجة المغربية"),
+            Triple("gemini-3.8-flash", "Flash 3.8", "تفكير سريري متقدم ومفصل")
+        )
+
+        AlertDialog(
+            onDismissRequest = { showConfigDialog = false },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Tune, null, tint = currentPalette.primary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("إعدادات BNaja AI", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            },
+            text = {
+                Column {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = currentPalette.primary.copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, currentPalette.primary.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            "مفتاح Google Gemini API مدمج ومفعل افتراضياً للإجابة المباشرة بالدارجة المغربية.",
+                            color = currentPalette.onSurface,
+                            fontSize = 11.5.sp,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        "اختر نموذج الذكاء الاصطناعي :",
+                        fontSize = 12.sp,
+                        color = currentPalette.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    models.forEach { (modelId, label, desc) ->
+                        val isSelected = selectedModel == modelId
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (isSelected) currentPalette.primary.copy(alpha = 0.15f) else currentPalette.surfaceVariant,
+                            border = BorderStroke(
+                                1.dp,
+                                if (isSelected) currentPalette.primary else currentPalette.outline.copy(alpha = 0.3f)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clickable { viewModel.setAiModel(modelId) }
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text(
+                                    label,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.sp,
+                                    color = if (isSelected) currentPalette.primary else currentPalette.onSurface
+                                )
+                                Text(
+                                    desc,
+                                    fontSize = 11.sp,
+                                    color = currentPalette.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        "مفتاح API مخصص (اختياري) :",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = currentPalette.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    OutlinedTextField(
+                        value = tempApiKey,
+                        onValueChange = { tempApiKey = it },
+                        placeholder = { Text("المفتاح المدمج مفعل تلقائياً (أو أدخل مفتاحك الخاص)", fontSize = 11.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = currentPalette.onSurface,
+                            unfocusedTextColor = currentPalette.onSurface
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.setCustomApiKey(tempApiKey)
+                        showConfigDialog = false
+                        Toast.makeText(context, "تم حفظ الإعدادات", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = currentPalette.primary)
+                ) {
+                    Text("حفظ", color = currentPalette.onPrimary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfigDialog = false }) {
+                    Text("إغلاق", color = currentPalette.onSurfaceVariant)
+                }
+            }
+        )
+    }
 }
 
 @Composable
-fun ChatBubble(message: ChatMessage) {
+fun BNajaChatBubble(message: ChatMessage, onCopy: () -> Unit = {}) {
     val isUser = message.isUser
+    val currentPalette = MaterialTheme.colorScheme
+
+    val isArabicText = remember(message.text) {
+        message.text.any { it in '\u0600'..'\u06FF' }
+    }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -300,44 +479,152 @@ fun ChatBubble(message: ChatMessage) {
         if (!isUser) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 4.dp)
+                modifier = Modifier.padding(bottom = 4.dp, start = 4.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(22.dp)
+                        .size(24.dp)
                         .clip(CircleShape)
-                        .background(ElectricCyan.copy(alpha = 0.18f)),
+                        .background(currentPalette.primary.copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.AutoAwesome, null, tint = ElectricCyan, modifier = Modifier.size(13.dp))
+                    Icon(
+                        Icons.Default.AutoAwesome,
+                        null,
+                        tint = currentPalette.primary,
+                        modifier = Modifier.size(14.dp)
+                    )
                 }
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    "Réponse de abdellahTron",
-                    color = ElectricCyan,
+                    "BNaja AI",
+                    color = currentPalette.primary,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp
+                    fontSize = 12.sp
                 )
             }
         }
 
         Surface(
             shape = RoundedCornerShape(
-                topStart = 14.dp,
-                topEnd = 14.dp,
-                bottomStart = if (isUser) 14.dp else 2.dp,
-                bottomEnd = if (isUser) 2.dp else 14.dp
+                topStart = 16.dp,
+                topEnd = 16.dp,
+                bottomStart = if (isUser) 16.dp else 4.dp,
+                bottomEnd = if (isUser) 4.dp else 16.dp
             ),
-            color = if (isUser) MedicalCyan else MedicalNavyElevated,
-            border = BorderStroke(1.dp, if (isUser) MedicalCyan else ElectricCyan.copy(alpha = 0.25f)),
-            modifier = Modifier.widthIn(max = 310.dp)
+            color = if (isUser) currentPalette.primary else currentPalette.surfaceVariant,
+            border = BorderStroke(
+                1.dp,
+                if (isUser) currentPalette.primary else currentPalette.outline.copy(alpha = 0.35f)
+            ),
+            modifier = Modifier.widthIn(min = 70.dp, max = 560.dp)
         ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                CompositionLocalProvider(
+                    LocalLayoutDirection provides (if (isArabicText) LayoutDirection.Rtl else LayoutDirection.Ltr)
+                ) {
+                    SelectionContainer {
+                        Text(
+                            text = message.text,
+                            color = if (isUser) currentPalette.onPrimary else currentPalette.onSurface,
+                            fontSize = 14.sp,
+                            lineHeight = 22.sp,
+                            textAlign = if (isArabicText) TextAlign.Start else TextAlign.Start
+                        )
+                    }
+                }
+
+                if (!isUser) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        IconButton(
+                            onClick = onCopy,
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.ContentCopy,
+                                contentDescription = "نسخ",
+                                tint = currentPalette.onSurfaceVariant,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BNajaTypingIndicator() {
+    val currentPalette = MaterialTheme.colorScheme
+    val transition = rememberInfiniteTransition(label = "typing")
+    val dot1Scale by transition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "dot1"
+    )
+    val dot2Scale by transition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, delayMillis = 200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "dot2"
+    )
+    val dot3Scale by transition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, delayMillis = 400, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "dot3"
+    )
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = currentPalette.surfaceVariant,
+        border = BorderStroke(1.dp, currentPalette.outline.copy(alpha = 0.3f)),
+        modifier = Modifier.padding(vertical = 4.dp, horizontal = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp * dot1Scale)
+                    .clip(CircleShape)
+                    .background(currentPalette.primary)
+            )
+            Box(
+                modifier = Modifier
+                    .size(8.dp * dot2Scale)
+                    .clip(CircleShape)
+                    .background(currentPalette.primary)
+            )
+            Box(
+                modifier = Modifier
+                    .size(8.dp * dot3Scale)
+                    .clip(CircleShape)
+                    .background(currentPalette.primary)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = message.text,
-                color = if (isUser) DarkNightBlue else PureWhite,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-                modifier = Modifier.padding(12.dp)
+                "BNaja AI كيوجد الجواب...",
+                color = currentPalette.primary,
+                fontSize = 11.5.sp,
+                fontWeight = FontWeight.Medium
             )
         }
     }

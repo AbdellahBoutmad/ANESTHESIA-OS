@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Emergency
+import androidx.compose.material.icons.filled.Healing
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalHospital
 import androidx.compose.material.icons.filled.Medication
@@ -59,9 +60,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationBar
@@ -98,11 +101,13 @@ import com.example.ui.screens.AnesthesiaTimelineScreen
 import com.example.ui.screens.BiologyScreen
 import com.example.ui.screens.CalculatorsScreen
 import com.example.ui.screens.ChecklistScreen
+import com.example.ui.screens.ConsultationWizard
 import com.example.ui.screens.EcgChallengeScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.MedicalTranslatorScreen
 import com.example.ui.screens.PatientsScreen
 import com.example.ui.screens.PharmacologyScreen
+import com.example.ui.screens.PostOpComplicationsScreen
 import com.example.ui.screens.ProtocolsScreen
 import com.example.ui.screens.ThemeChooserDialog
 import com.example.ui.screens.TrainingScreen
@@ -206,7 +211,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
-                        containerColor = DarkNightBlue,
+                        containerColor = MaterialTheme.colorScheme.background,
                         topBar = {
                             CenterAlignedTopAppBar(
                                 title = {
@@ -342,28 +347,35 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                                    containerColor = MedicalNavy
+                                    containerColor = MaterialTheme.colorScheme.surface
                                 )
                             )
                         },
                         bottomBar = {
                             NavigationBar(
-                                containerColor = MedicalNavy,
-                                contentColor = MedicalCyan
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                contentColor = MaterialTheme.colorScheme.primary,
+                                tonalElevation = 8.dp,
+                                modifier = Modifier.testTag("main_bottom_nav_bar")
                             ) {
                                 val navItems = listOf(
                                     NavigationItem("Accueil", Icons.Default.Home, MainTab.HOME, "tab_home"),
                                     NavigationItem("Patients", Icons.Default.Person, MainTab.PATIENTS, "tab_patients"),
                                     NavigationItem("Pharmaco", Icons.Default.Medication, MainTab.PHARMACO, "tab_pharmaco"),
                                     NavigationItem("Protocoles", Icons.Default.AssignmentTurnedIn, MainTab.PROTOCOLS, "tab_protocols"),
-                                    NavigationItem("abdellahTron", Icons.Default.AutoAwesome, MainTab.AI, "tab_ai")
+                                    NavigationItem("BNaja AI", Icons.Default.AutoAwesome, MainTab.AI, "tab_ai")
                                 )
 
                                 navItems.forEach { item ->
                                     val isSelected = currentTab == item.tab && activeSubScreen == SubScreen.NONE
                                     NavigationBarItem(
                                         selected = isSelected,
-                                        onClick = { viewModel.setTab(item.tab) },
+                                        onClick = {
+                                            if (activeSubScreen != SubScreen.NONE) {
+                                                viewModel.closeSubScreen()
+                                            }
+                                            viewModel.setTab(item.tab)
+                                        },
                                         icon = {
                                             Icon(
                                                 imageVector = item.icon,
@@ -374,17 +386,19 @@ class MainActivity : ComponentActivity() {
                                         label = {
                                             Text(
                                                 text = item.label,
-                                                fontSize = 10.5.sp,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                                maxLines = 1
+                                                fontSize = 10.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                maxLines = 1,
+                                                softWrap = false
                                             )
                                         },
+                                        alwaysShowLabel = true,
                                         colors = NavigationBarItemDefaults.colors(
-                                            selectedIconColor = DarkNightBlue,
-                                            unselectedIconColor = SecondaryGrey,
-                                            selectedTextColor = MedicalCyan,
-                                            unselectedTextColor = SecondaryGrey,
-                                            indicatorColor = MedicalCyan
+                                            selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            indicatorColor = MaterialTheme.colorScheme.primary
                                         ),
                                         modifier = Modifier.testTag(item.testTag)
                                     )
@@ -402,11 +416,16 @@ class MainActivity : ComponentActivity() {
                                 SubScreen.CHECKLIST -> ChecklistScreen(viewModel = viewModel)
                                 SubScreen.BIOLOGY -> BiologyScreen()
                                 SubScreen.CALCULATORS -> CalculatorsScreen()
+                                SubScreen.POST_OP_COMPLICATIONS -> PostOpComplicationsScreen(viewModel = viewModel, onBack = { viewModel.closeSubScreen() })
                                 SubScreen.QUIZ -> TrainingScreen(viewModel = viewModel)
                                 SubScreen.VENTILATION_SIMULATOR -> VentilationSimulatorScreen(viewModel = viewModel, onBack = { viewModel.closeSubScreen() })
                                 SubScreen.ECG_CHALLENGE -> EcgChallengeScreen(viewModel = viewModel, onBack = { viewModel.closeSubScreen() })
                                 SubScreen.ANESTHESIA_TIMELINE -> AnesthesiaTimelineScreen(viewModel = viewModel, onBack = { viewModel.closeSubScreen() })
                                 SubScreen.MEDICAL_TRANSLATOR -> MedicalTranslatorScreen(viewModel = viewModel, onBack = { viewModel.closeSubScreen() })
+                                SubScreen.CONSULTATION_WIZARD -> ConsultationWizard(
+                                    viewModel = viewModel,
+                                    onClose = { viewModel.closeSubScreen() }
+                                )
                                 else -> {
                                     // Primary tabs
                                     when (currentTab) {
@@ -428,6 +447,7 @@ class MainActivity : ComponentActivity() {
     private fun getScreenBadge(tab: MainTab, subScreen: SubScreen): String {
         return when (subScreen) {
             SubScreen.CHECKLIST -> "Check-list"
+            SubScreen.POST_OP_COMPLICATIONS -> "Complications"
             SubScreen.BIOLOGY -> "Biologie"
             SubScreen.CALCULATORS -> "Calculateurs"
             SubScreen.QUIZ -> "Formation"
@@ -444,7 +464,7 @@ class MainActivity : ComponentActivity() {
                     MainTab.PATIENTS -> "Patients"
                     MainTab.PHARMACO -> "Pharmaco"
                     MainTab.PROTOCOLS -> "Protocoles"
-                    MainTab.AI -> "abdellahTron"
+                    MainTab.AI -> "BNaja AI"
                 }
             }
         }
@@ -543,12 +563,12 @@ fun DrawerContent(
         DrawerItem("Protocoles & Chirurgies", Icons.Default.AssignmentTurnedIn, currentTab == MainTab.PROTOCOLS && activeSubScreen == SubScreen.NONE) {
             onSelectTab(MainTab.PROTOCOLS)
         }
-        DrawerItem("Assistant IA abdellahTron", Icons.Default.AutoAwesome, currentTab == MainTab.AI && activeSubScreen == SubScreen.NONE) {
-            onSelectTab(MainTab.AI)
-        }
 
         Spacer(modifier = Modifier.height(14.dp))
         DrawerSectionHeader("OUTILS DE SALLE D'OPÉRATION")
+        DrawerItem("Complications Post-Op & SSPI", Icons.Default.Healing, activeSubScreen == SubScreen.POST_OP_COMPLICATIONS) {
+            onOpenSubScreen(SubScreen.POST_OP_COMPLICATIONS)
+        }
         DrawerItem("Check-list Matériel & OMS", Icons.Outlined.Checklist, activeSubScreen == SubScreen.CHECKLIST) {
             onOpenSubScreen(SubScreen.CHECKLIST)
         }
@@ -660,13 +680,13 @@ fun AboutDialog(onDismiss: () -> Unit) {
             ) {
                 Surface(
                     shape = RoundedCornerShape(10.dp),
-                    color = SurfaceCard,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
                     border = BorderStroke(1.dp, ChampagneGold.copy(alpha = 0.5f))
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Text(
-                            text = "hi there I'm abdellah thanks for using my app ila kan 3ndk chi chose a ajouter fhad application ola chi error \"bug\" lgitih sifto liya :boutabd6@gmail.com \nZERO COMPLICATIONS IS THE GOAL. PATIENT bikhir IS THE PRIORITY. \nCreated by Abdellah Boutmad\nIAR • Anesthésie-Réanimation",
-                            color = SoftWhite,
+                            text = "hi there thanks for using my app ila kan 3ndk chi chose a ajouter fhad application ola chi error lgitih sifto liya :boutabd6@gmail.com ola wts : 0669416123 wakha mohal nchofo Created by Abdellah Boutmad\nIAR • Anesthésie-Réanimation \nISPITS GUELMIM \nZERO COMPLICATIONS IS THE GOAL. PATIENT BIKHIR IS THE PRIORITY",
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 13.sp,
                             lineHeight = 20.sp,
                             fontWeight = FontWeight.Medium
@@ -689,55 +709,59 @@ fun AboutDialog(onDismiss: () -> Unit) {
                     }
                 }
 
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = SurfaceCard,
-                    border = BorderStroke(1.dp, BorderSubtle)
+                // Quick Contact Actions: WhatsApp & Email
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Button(
+                        onClick = {
+                            try {
+                                val whatsappIntent = Intent(Intent.ACTION_VIEW).apply {
+                                    data = Uri.parse("https://wa.me/212669416123")
+                                }
+                                context.startActivity(whatsappIntent)
+                            } catch (e: Exception) {
+                                emailStatusMessage = "Impossible d'ouvrir WhatsApp directement. Numéro : +212 669 416 123"
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = TurquoiseGreen, contentColor = DarkNightBlue),
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Icon(Icons.Default.LocalHospital, contentDescription = null, tint = MedicalTeal, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Plateforme d'anesthésie-réanimation • abdellahTron",
-                            color = SlateGray,
-                            fontSize = 11.sp
-                        )
+                        Text("WhatsApp", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+
+                    Button(
+                        onClick = {
+                            try {
+                                val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                                    data = Uri.parse("mailto:boutabd6@gmail.com")
+                                    putExtra(Intent.EXTRA_SUBJECT, "Anestheia Trone — Suggestion / Erreur")
+                                }
+                                context.startActivity(emailIntent)
+                            } catch (e: Exception) {
+                                emailStatusMessage = "Écrire directement à : boutabd6@gmail.com"
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MedicalTeal, contentColor = MidnightNavy),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("E-mail", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }
         },
-        confirmButton = {
-            Button(
-                onClick = {
-                    try {
-                        val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                            data = Uri.parse("mailto:boutabd6@gmail.com")
-                            putExtra(Intent.EXTRA_SUBJECT, "Suggestion ou erreur — Anestheia Trone")
-                        }
-                        context.startActivity(emailIntent)
-                    } catch (e: Exception) {
-                        emailStatusMessage = "Aucune application de messagerie n'a pu être lancée sur cet appareil. Vous pouvez écrire manuellement à boutabd6@gmail.com."
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = MedicalTeal, contentColor = MidnightNavy),
-                modifier = Modifier.testTag("send_email_button")
-            ) {
-                Text("Envoyer un e-mail", fontWeight = FontWeight.Bold)
-            }
-        },
+        confirmButton = {},
         dismissButton = {
             OutlinedButton(
                 onClick = onDismiss,
                 border = BorderStroke(1.dp, BorderSubtle),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = SoftWhite)
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
             ) {
                 Text("Fermer")
             }
         },
-        containerColor = DeepNavy
+        containerColor = MaterialTheme.colorScheme.surface
     )
 }
 
