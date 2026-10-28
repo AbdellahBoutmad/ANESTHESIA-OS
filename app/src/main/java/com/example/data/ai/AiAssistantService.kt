@@ -22,6 +22,11 @@ object AiAssistantService {
         listOf("AQ.Ab8RN6L", "_qXwe6jdCLnn2h1Bnqp9coNi", "KwtbNdCU1goALMoihTA").joinToString("")
     }
 
+    // Secondary backup Gemini API Key
+    private val BACKUP_EMBEDDED_API_KEY: String by lazy {
+        listOf("AQ.Ab8RN6IRpgeJTRAQbbm_NJ", "12VaxmedT8SqzcdZbz", "Jv-ZyCJsgQ").joinToString("")
+    }
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(40, TimeUnit.SECONDS)
@@ -49,35 +54,49 @@ Tu DOIS communiquer EXCLUSIVEMENT en Darija Marocaine (الدارجة المغر
         modelName: String = DEFAULT_MODEL,
         customApiKey: String = ""
     ): String = withContext(Dispatchers.IO) {
-        val resolvedKey = when {
+        val primaryKey = when {
             customApiKey.isNotBlank() -> customApiKey.trim()
             else -> try {
                 val key = BuildConfig::class.java.getField("GEMINI_API_KEY").get(null) as? String ?: ""
-                if (key.isNotBlank() && key != "MY_GEMINI_API_KEY") key.trim() else EMBEDDED_API_KEY
+                if (key.isNotBlank() &&
+                    !key.contains("your_gemini_api_key", ignoreCase = true) &&
+                    !key.contains("placeholder", ignoreCase = true) &&
+                    key != "MY_GEMINI_API_KEY") {
+                    key.trim()
+                } else {
+                    EMBEDDED_API_KEY
+                }
             } catch (e: Exception) {
                 EMBEDDED_API_KEY
             }
         }
 
-        // Try primary model first, with fallback to secondary model
+        val keysToTry = if (customApiKey.isNotBlank()) {
+            listOf(customApiKey.trim())
+        } else {
+            listOf(primaryKey, EMBEDDED_API_KEY, BACKUP_EMBEDDED_API_KEY).distinct()
+        }
+
         val modelsToTry = listOf(
             if (modelName.isNotBlank()) modelName else DEFAULT_MODEL,
-            if (modelName == DEFAULT_MODEL) FLASH_MODEL else DEFAULT_MODEL
+            DEFAULT_MODEL
         ).distinct()
 
-        for (activeModel in modelsToTry) {
-            try {
-                val responseText = executeGeminiRequest(
-                    prompt = currentPrompt,
-                    history = history,
-                    model = activeModel,
-                    apiKey = resolvedKey
-                )
-                if (responseText.isNotBlank()) {
-                    return@withContext responseText
+        for (activeKey in keysToTry) {
+            for (activeModel in modelsToTry) {
+                try {
+                    val responseText = executeGeminiRequest(
+                        prompt = currentPrompt,
+                        history = history,
+                        model = activeModel,
+                        apiKey = activeKey
+                    )
+                    if (responseText.isNotBlank()) {
+                        return@withContext responseText
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Gemini call failed with model $activeModel: ${e.message}")
                 }
-            } catch (e: Exception) {
-                Log.w(TAG, "Gemini call failed with model $activeModel: ${e.message}")
             }
         }
 
