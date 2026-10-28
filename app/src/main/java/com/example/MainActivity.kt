@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Biotech
 import androidx.compose.material.icons.outlined.Checklist
@@ -103,6 +104,7 @@ import com.example.ui.screens.CalculatorsScreen
 import com.example.ui.screens.ChecklistScreen
 import com.example.ui.screens.ConsultationWizard
 import com.example.ui.screens.EcgChallengeScreen
+import com.example.ui.screens.escaperoom.EscapeRoomScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.MedicalTranslatorScreen
 import com.example.ui.screens.PatientsScreen
@@ -426,6 +428,10 @@ class MainActivity : ComponentActivity() {
                                     viewModel = viewModel,
                                     onClose = { viewModel.closeSubScreen() }
                                 )
+                                SubScreen.ESCAPE_ROOM -> EscapeRoomScreen(
+                                    viewModel = viewModel,
+                                    onBack = { viewModel.closeSubScreen() }
+                                )
                                 else -> {
                                     // Primary tabs
                                     when (currentTab) {
@@ -458,6 +464,7 @@ class MainActivity : ComponentActivity() {
             SubScreen.ECG_CHALLENGE -> "ECG Challenge"
             SubScreen.ANESTHESIA_TIMELINE -> "Timeline"
             SubScreen.MEDICAL_TRANSLATOR -> "Traducteur"
+            SubScreen.ESCAPE_ROOM -> "Escape Room"
             SubScreen.NONE -> {
                 when (tab) {
                     MainTab.HOME -> "Tableau de bord"
@@ -587,6 +594,9 @@ fun DrawerContent(
 
         Spacer(modifier = Modifier.height(14.dp))
         DrawerSectionHeader("SIMULATION & PRATIQUE CLINIQUE")
+        DrawerItem("Clinical Escape Room (Simulateur)", Icons.Default.VideogameAsset, activeSubScreen == SubScreen.ESCAPE_ROOM) {
+            onOpenSubScreen(SubScreen.ESCAPE_ROOM)
+        }
         DrawerItem("Simulateur de Ventilation", Icons.Default.Air, activeSubScreen == SubScreen.VENTILATION_SIMULATOR) {
             onOpenSubScreen(SubScreen.VENTILATION_SIMULATOR)
         }

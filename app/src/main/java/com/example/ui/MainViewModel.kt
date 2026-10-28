@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import com.example.data.escaperoom.EscapeRoomEngine
+import com.example.data.escaperoom.EscapeRoomStorage
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -32,7 +34,8 @@ enum class MainTab {
 
 enum class SubScreen {
     NONE, CHECKLIST, BIOLOGY, CALCULATORS, QUIZ, CONSULTATION_WIZARD, PROTOCOL_DETAIL, DRUG_DETAIL,
-    VENTILATION_SIMULATOR, ECG_CHALLENGE, ANESTHESIA_TIMELINE, MEDICAL_TRANSLATOR, POST_OP_COMPLICATIONS
+    VENTILATION_SIMULATOR, ECG_CHALLENGE, ANESTHESIA_TIMELINE, MEDICAL_TRANSLATOR, POST_OP_COMPLICATIONS,
+    ESCAPE_ROOM
 }
 
 data class ChatMessage(
@@ -48,6 +51,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val patientDao = db.patientDao()
     private val checklistDao = db.checklistDao()
     val offlineRepository = OfflineMedicalRepository(db)
+    val escapeRoomEngine = EscapeRoomEngine(viewModelScope)
+    val escapeRoomStorage = EscapeRoomStorage(application)
 
     // Navigation state
     private val _currentTab = MutableStateFlow(MainTab.HOME)

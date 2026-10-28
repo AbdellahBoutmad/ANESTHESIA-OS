@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.VideogameAsset
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Biotech
 import androidx.compose.material.icons.outlined.Checklist
@@ -364,6 +365,9 @@ fun HomeScreen(viewModel: MainViewModel) {
             // 3. Quick Action Interactive Pills (Horizontal Flow)
             item {
                 val actionPills = listOf(
+                    Triple("Clinical Escape Room", Icons.Default.VideogameAsset, colors.tertiary) to {
+                        viewModel.openSubScreen(SubScreen.ESCAPE_ROOM)
+                    },
                     Triple("Complications Post-Op", Icons.Default.CrisisAlert, colors.error) to {
                         viewModel.openSubScreen(SubScreen.POST_OP_COMPLICATIONS)
                     },
